@@ -14,6 +14,7 @@ export default function RootLayout() {
       <Stack>
         <Stack.Screen name="index" options={{ title: 'Liga Amateur Santafesina' }} />
         <Stack.Screen name="equipos" options={{ headerShown: false }} />
+        <Stack.Screen name="partidos/[id]" options={{ title: 'Partido en vivo' }} />
         <Stack.Screen name="explore" options={{ title: 'Expo' }} />
       </Stack>
     </ThemeProvider>
