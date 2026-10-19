@@ -2,13 +2,13 @@
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    Button,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput
+  ActivityIndicator,
+  Alert,
+  Button,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput
 } from 'react-native';
 
 import { Equipo, listarEquipos } from '../../services/equipos';
@@ -48,12 +48,12 @@ export default function NuevoJugadorScreen() {
       return;
     }
 
-    if (nombre.length > 60 || apellido.length > 60) {
+    if (nombre.trim().length > 60 || apellido.trim().length > 60) {
       setError('Nombre y apellido no pueden superar los 60 caracteres');
       return;
     }
 
-    if (dni.length > 10) {
+    if (dni.trim().length > 10) {
       setError('El DNI no puede superar los 10 caracteres');
       return;
     }

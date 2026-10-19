@@ -1,6 +1,7 @@
 import { Jugador, JugadorRequest } from '../types/jugador';
 import { API_URL } from './api';
 
+
 async function verificarRespuesta(respuesta: Response) {
   if (respuesta.ok) {
     return;
@@ -8,18 +9,25 @@ async function verificarRespuesta(respuesta: Response) {
 
   const error = await respuesta.json().catch(() => null);
 
-  const mensaje = error?.errores
-    ? Object.values(error.errores).join('\n')
-    : error?.mensaje;
+  let mensaje = 'No se pudo completar la operación';
 
-  throw new Error(mensaje || 'No se pudo completar la operación');
+  if (error?.errores) {
+    mensaje = Object.values(error.errores).join('\n');
+  } else if (error?.mensaje) {
+    mensaje = error.mensaje;
+  } else if (error?.message) {
+    mensaje = error.message;
+  }
+
+  throw new Error(mensaje);
 }
+
 
 export async function listarJugadores(
   equipoId?: number
 ): Promise<Jugador[]> {
   let url = `${API_URL}/jugadores`;
-  console.log('API_URL:', API_URL);
+
 
   if (equipoId !== undefined) {
     url += `?equipoId=${equipoId}`;

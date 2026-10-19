@@ -1,15 +1,15 @@
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    Button,
-    FlatList,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  ActivityIndicator,
+  Alert,
+  Button,
+  FlatList,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
 
 import { Equipo, listarEquipos } from '../../services/equipos';
@@ -22,6 +22,7 @@ export default function JugadoresScreen() {
   const [equipoId, setEquipoId] = useState<number | undefined>();
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
+  const [errorOperacion, setErrorOperacion] = useState('');
   const [errorEquipos, setErrorEquipos] = useState('');
   const [recarga, setRecarga] = useState(0);
 
@@ -91,6 +92,7 @@ export default function JugadoresScreen() {
   }, [equipoId, recarga]);
 
 async function eliminarJugador(id: number) {
+  setErrorOperacion('');
   const confirmar = async () => {
     try {
       await darDeBajaJugador(id);
@@ -101,7 +103,7 @@ async function eliminarJugador(id: number) {
           ? error.message
           : 'No se pudo dar de baja al jugador';
 
-      setError(mensaje);
+      setErrorOperacion(mensaje);
     }
   };
 
@@ -176,7 +178,9 @@ async function eliminarJugador(id: number) {
       {errorEquipos !== '' && (
         <Text style={styles.error}>{errorEquipos}</Text>
       )}
-
+{errorOperacion !== '' && (
+  <Text style={styles.error}>{errorOperacion}</Text>
+)}
       <Button
         title="Actualizar"
         onPress={() => setRecarga((valor) => valor + 1)}
