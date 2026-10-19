@@ -2,17 +2,17 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    Button,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
+  ActivityIndicator,
+  Button,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
 } from 'react-native';
 
 import {
-    modificarJugador,
-    obtenerJugador,
+  modificarJugador,
+  obtenerJugador,
 } from '../../services/jugadores';
 
 export default function EditarJugadorScreen() {
@@ -117,7 +117,20 @@ export default function EditarJugadorScreen() {
   if (cargando) {
     return <ActivityIndicator size="large" />;
   }
-
+if (equipoId === null) {
+  return (
+    <ScrollView contentContainerStyle={styles.contenedor}>
+      <Text style={styles.titulo}>Editar jugador</Text>
+      <Text style={styles.error}>
+        {error || 'No se pudo cargar el jugador'}
+      </Text>
+      <Button
+        title="Volver"
+        onPress={() => router.replace('/jugadores')}
+      />
+    </ScrollView>
+  );
+}
   return (
     <ScrollView contentContainerStyle={styles.contenedor}>
       <Text style={styles.titulo}>Editar jugador</Text>
