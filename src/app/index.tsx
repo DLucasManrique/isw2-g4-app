@@ -33,6 +33,7 @@ function getDevMenuHint() {
 
 export default function HomeScreen() {
   const { usuario, cerrarSesion } = useSesion();
+  const esAdmin = usuario?.rol === 'ADMIN';
   const [cerrando, setCerrando] = useState(false);
   const [error, setError] = useState('');
 
@@ -63,7 +64,12 @@ export default function HomeScreen() {
         </ThemedView>
 
         <Button title="Gestión de equipos" onPress={() => router.push('/equipos')} />
-
+{esAdmin && (
+  <Button
+    title="Gestión de usuarios"
+    onPress={() => router.push('/usuarios')}
+  />
+)}
         <ThemedText type="code" style={styles.code}>
           get started
         </ThemedText>
