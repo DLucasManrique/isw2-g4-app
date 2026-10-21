@@ -42,6 +42,8 @@ export default function HomeScreen() {
 
         <Button title="Gestión de equipos" onPress={() => router.push('/equipos')} />
 
+        <Button title="Partidos" onPress={() => router.push('/partidos')} />
+
         <ThemedText type="code" style={styles.code}>
           get started
         </ThemedText>
