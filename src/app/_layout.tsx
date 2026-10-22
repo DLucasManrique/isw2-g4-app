@@ -29,12 +29,13 @@ function Navegacion() {
         <Stack.Screen name="login" options={{ title: 'Inicio de sesión' }} />
       </Stack.Protected>
       <Stack.Protected guard={!!usuario}>
-        <Stack.Screen name="index" options={{ title: 'Liga Amateur Santafesina' }} />
-        <Stack.Screen name="equipos" options={{ headerShown: false }} />
-        <Stack.Screen name="partidos/[id]" options={{ title: 'Partido en vivo' }} />
-        <Stack.Screen name="catalogo" options={{ title: 'Catálogo' }} />
-        <Stack.Screen name="explore" options={{ title: 'Expo' }} />
-      </Stack.Protected>
+  <Stack.Screen name="index" options={{ title: 'Liga Amateur Santafesina' }} />
+  <Stack.Screen name="equipos" options={{ headerShown: false }} />
+  <Stack.Screen name="partidos/[id]" options={{ title: 'Partido en vivo' }} />
+  <Stack.Screen name="catalogo" options={{ title: 'Catálogo' }} />
+  <Stack.Screen name="posiciones" options={{ title: 'Tabla de posiciones' }} />
+  <Stack.Screen name="explore" options={{ title: 'Expo' }} />
+</Stack.Protected>
     </Stack>
   );
 }
