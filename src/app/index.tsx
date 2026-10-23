@@ -78,6 +78,7 @@ export default function HomeScreen() {
           </ThemedView>
 
           <Button title="Gestión de equipos" onPress={() => router.push('/equipos')} />
+          <Button title="Partidos" onPress={() => router.push('/partidos')} />
           <ThemedView style={styles.accesoPartido}>
             <ThemedText>ID del partido</ThemedText>
             <TextInput accessibilityLabel="ID del partido" value={partidoId} onChangeText={setPartidoId} keyboardType="number-pad" style={{ color: theme.text, borderColor: theme.textSecondary, borderWidth: 1, borderRadius: Spacing.one, padding: Spacing.two, minHeight: 48 }} onSubmitEditing={abrirPartido} />

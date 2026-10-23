@@ -31,6 +31,8 @@ function Navegacion() {
       <Stack.Protected guard={!!usuario}>
         <Stack.Screen name="index" options={{ title: 'Liga Amateur Santafesina' }} />
         <Stack.Screen name="equipos" options={{ headerShown: false }} />
+        <Stack.Screen name="partidos/index" options={{ title: 'Partidos' }} />
+        <Stack.Screen name="partidos/[id]/detalle" options={{ title: 'Detalle de partido' }} />
         <Stack.Screen name="partidos/[id]" options={{ title: 'Partido en vivo' }} />
         <Stack.Screen name="catalogo" options={{ title: 'Catálogo' }} />
         <Stack.Screen name="explore" options={{ title: 'Expo' }} />

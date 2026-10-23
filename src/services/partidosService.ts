@@ -10,11 +10,13 @@ export type Partido = {
   equipoVisitanteId: number;
   canchaId: number;
   arbitroId: number;
-  fechaHoraInicio: string | null;
+  fechaHoraInicio: string;
   estado: EstadoPartido;
+  golesLocal: number;
+  golesVisitante: number;
 };
 
-export async function solicitarPartido(ruta: string, opciones?: RequestInit): Promise<Response> {
+export async function solicitarPartido(ruta: string, opciones?: RequestInit, permitir404 = false): Promise<Response> {
   if (!API_URL) throw new Error('Falta configurar EXPO_PUBLIC_API_URL para conectar con el backend.');
 
   let respuesta: Response;
@@ -24,7 +26,7 @@ export async function solicitarPartido(ruta: string, opciones?: RequestInit): Pr
     throw new Error('No se pudo conectar con el backend. Revisa la conexión. Si estabas guardando, actualiza antes de repetir la operación.');
   }
 
-  if (!respuesta.ok) {
+  if (!respuesta.ok && !(permitir404 && respuesta.status === 404)) {
     const problema: unknown = await respuesta.json().catch(() => null);
     let mensaje = `La operación no pudo completarse (HTTP ${respuesta.status}).`;
     if (problema && typeof problema === 'object') {
@@ -39,12 +41,18 @@ export async function solicitarPartido(ruta: string, opciones?: RequestInit): Pr
   return respuesta;
 }
 
-export async function obtenerPartido(id: number): Promise<Partido> {
-  const respuesta = await solicitarPartido(`/${id}`);
+export async function listarPartidos(): Promise<Partido[]> {
+  const respuesta = await solicitarPartido('');
   return respuesta.json();
 }
 
-export async function cambiarEstadoPartido(id: number, estado: EstadoPartido): Promise<Partido> {
+export async function obtenerPartido(id: number): Promise<Partido | null> {
+  const respuesta = await solicitarPartido(`/${id}`, undefined, true);
+  if (respuesta.status === 404) return null;
+  return respuesta.json();
+}
+
+export async function cambiarEstadoPartido(id: number, estado: EstadoPartido): Promise<Omit<Partido, 'golesLocal' | 'golesVisitante'>> {
   const respuesta = await solicitarPartido(`/${id}/estado`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
