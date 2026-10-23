@@ -34,6 +34,7 @@ function getDevMenuHint() {
 
 export default function HomeScreen() {
   const { usuario, cerrarSesion } = useSesion();
+  const esAdmin = usuario?.rol === 'ADMIN';
   const [cerrando, setCerrando] = useState(false);
   const [error, setError] = useState('');
   const theme = useTheme();
@@ -78,6 +79,12 @@ export default function HomeScreen() {
           </ThemedView>
 
           <Button title="Gestión de equipos" onPress={() => router.push('/equipos')} />
+          {esAdmin && (
+  <Button
+    title="Gestión de usuarios"
+    onPress={() => router.push('/usuarios')}
+  />
+)}
           <ThemedView style={styles.accesoPartido}>
             <ThemedText>ID del partido</ThemedText>
             <TextInput accessibilityLabel="ID del partido" value={partidoId} onChangeText={setPartidoId} keyboardType="number-pad" style={{ color: theme.text, borderColor: theme.textSecondary, borderWidth: 1, borderRadius: Spacing.one, padding: Spacing.two, minHeight: 48 }} onSubmitEditing={abrirPartido} />
