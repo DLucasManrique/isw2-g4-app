@@ -1,9 +1,11 @@
+import { Visual } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
+import { AppButton as Button } from '@/components/app-button';
 
 import { router } from 'expo-router';
 import { useState } from 'react';
 import {
     ActivityIndicator,
-    Button,
     ScrollView,
     StyleSheet,
     Text,
@@ -14,6 +16,8 @@ import {
 import { crearUsuario } from '../../services/usuariosService';
 
 export default function NuevoUsuarioScreen() {
+  const theme = useTheme();
+  const styles = createStyles(theme);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [nombreCompleto, setNombreCompleto] = useState('');
@@ -56,18 +60,20 @@ export default function NuevoUsuarioScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.contenedor}>
-      <Text style={styles.titulo}>Registrar usuario</Text>
+      <Text style={[styles.texto, styles.titulo]}>Registrar usuario</Text>
 
-      <Text>Nombre completo *</Text>
+      <Text style={styles.texto}>Nombre completo *</Text>
       <TextInput
+        placeholderTextColor={theme.textSecondary}
         style={styles.input}
         value={nombreCompleto}
         onChangeText={setNombreCompleto}
         placeholder="Ej: Juan Pérez"
       />
 
-      <Text>Nombre de usuario *</Text>
+      <Text style={styles.texto}>Nombre de usuario *</Text>
       <TextInput
+        placeholderTextColor={theme.textSecondary}
         style={styles.input}
         value={username}
         onChangeText={setUsername}
@@ -75,8 +81,9 @@ export default function NuevoUsuarioScreen() {
         placeholder="Ej: jperez"
       />
 
-      <Text>Contraseña *</Text>
+      <Text style={styles.texto}>Contraseña *</Text>
       <TextInput
+        placeholderTextColor={theme.textSecondary}
         style={styles.input}
         value={password}
         onChangeText={setPassword}
@@ -84,19 +91,19 @@ export default function NuevoUsuarioScreen() {
         placeholder="Ingresar contraseña"
       />
 
-      <Text>Rol *</Text>
+      <Text style={styles.texto}>Rol *</Text>
       <View style={styles.roles}>
-        <Button
+        <Button selected={rol === 'ADMIN'}
           title={rol === 'ADMIN' ? '✓ ADMIN' : 'ADMIN'}
           onPress={() => setRol('ADMIN')}
         />
-        <Button
+        <Button selected={rol === 'DELEGADO'}
           title={rol === 'DELEGADO' ? '✓ DELEGADO' : 'DELEGADO'}
           onPress={() => setRol('DELEGADO')}
         />
       </View>
 
-      {error !== '' && <Text style={styles.error}>{error}</Text>}
+      {error !== '' && <Text style={[styles.texto, styles.error]}>{error}</Text>}
 
       {guardando ? (
         <ActivityIndicator size="large" />
@@ -104,7 +111,7 @@ export default function NuevoUsuarioScreen() {
         <Button title="Guardar usuario" onPress={guardar} />
       )}
 
-      <Button
+      <Button variant="secondary"
         title="Cancelar"
         onPress={() => router.replace('/usuarios')}
       />
@@ -112,28 +119,35 @@ export default function NuevoUsuarioScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  contenedor: {
-    padding: 20,
-    gap: 12,
-    flexGrow: 1,
-    backgroundColor: '#ffffff',
-  },
-  titulo: {
-    fontSize: 26,
-    fontWeight: 'bold',
-    marginBottom: 10,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#cccccc',
-    borderRadius: 8,
-    padding: 12,
-  },
-  roles: {
-    gap: 8,
-  },
-  error: {
-    color: '#b00020',
-  },
-});
+const createStyles = (theme: ReturnType<typeof useTheme>) =>
+  StyleSheet.create({
+    texto: {
+      color: theme.text,
+      fontSize: 16,
+      lineHeight: 24,
+    },
+    contenedor: {
+      flexGrow: 1,
+      ...Visual.content,
+      backgroundColor: theme.background,
+    },
+    titulo: {
+      marginBottom: 10,
+      ...Visual.title,
+    },
+    input: {
+      padding: 12,
+      ...Visual.input,
+      color: theme.text,
+      borderColor: theme.border,
+      backgroundColor: theme.backgroundElement,
+    },
+    roles: {
+      gap: 8,
+    },
+    error: {
+      ...Visual.message,
+      color: theme.danger,
+      backgroundColor: theme.dangerBackground,
+    },
+  });

@@ -1,8 +1,8 @@
+import { AppButton as Button } from '@/components/app-button';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Button,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -13,7 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { Spacing, Visual } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { actualizarEquipo, crearEquipo, obtenerEquipo } from '@/services/equiposService';
 
@@ -23,6 +23,7 @@ export default function EquipoFormularioScreen({ modo }: { modo: 'crear' | 'edit
   const idValido = Number.isSafeInteger(equipoId) && equipoId > 0 && equipoId <= 2147483647;
   const editando = modo === 'editar';
   const theme = useTheme();
+  const styles = createStyles(theme);
   const [nombre, setNombre] = useState('');
   const [barrio, setBarrio] = useState('');
   const [torneoId, setTorneoId] = useState('');
@@ -117,7 +118,7 @@ export default function EquipoFormularioScreen({ modo }: { modo: 'crear' | 'edit
     styles.campo,
     {
       color: theme.text,
-      borderColor: theme.textSecondary,
+      borderColor: theme.border,
       backgroundColor: theme.backgroundElement,
     },
   ];
@@ -130,7 +131,7 @@ export default function EquipoFormularioScreen({ modo }: { modo: 'crear' | 'edit
             {cargando && <ActivityIndicator accessibilityLabel="Cargando equipo" />}
             {!!error && <ThemedText accessibilityRole="alert">{error}</ThemedText>}
             {!cargando && !equipoCargado && idValido && (
-              <Button title="Reintentar" onPress={() => setIntentoCarga((intento) => intento + 1)} />
+              <Button variant="secondary" title="Reintentar" onPress={() => setIntentoCarga((intento) => intento + 1)} />
             )}
             {!cargando && equipoCargado && (
               <>
@@ -165,7 +166,7 @@ export default function EquipoFormularioScreen({ modo }: { modo: 'crear' | 'edit
                 <Button title={guardando ? 'Guardando…' : 'Guardar equipo'} disabled={guardando} onPress={() => void guardar()} />
               </>
             )}
-            <Button title="Cancelar" disabled={guardando} onPress={cancelar} />
+            <Button variant="secondary" title="Cancelar" disabled={guardando} onPress={cancelar} />
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
@@ -173,14 +174,20 @@ export default function EquipoFormularioScreen({ modo }: { modo: 'crear' | 'edit
   );
 }
 
-const styles = StyleSheet.create({
-  pantalla: { flex: 1 },
-  contenido: {
-    width: '100%',
-    maxWidth: MaxContentWidth,
-    alignSelf: 'center',
-    padding: Spacing.three,
-    gap: Spacing.two,
-  },
-  campo: { borderWidth: 1, borderRadius: Spacing.one, padding: Spacing.two, fontSize: 16, minHeight: 48 },
-});
+const createStyles = (theme: ReturnType<typeof useTheme>) =>
+  StyleSheet.create({
+    pantalla: {
+      flex: 1,
+    },
+    contenido: {
+      ...Visual.content,
+      backgroundColor: theme.background,
+    },
+    campo: {
+      padding: Spacing.two,
+      ...Visual.input,
+      color: theme.text,
+      borderColor: theme.border,
+      backgroundColor: theme.backgroundElement,
+    },
+  });

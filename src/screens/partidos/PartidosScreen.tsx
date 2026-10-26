@@ -1,15 +1,19 @@
+import { useTheme } from '@/hooks/use-theme';
+import { AppButton as Button } from '@/components/app-button';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Button, FlatList, Pressable, StyleSheet } from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { Spacing, Visual } from '@/constants/theme';
 import { type Equipo, listarEquipos } from '@/services/equiposService';
 import { type Partido, listarPartidos } from '@/services/partidosService';
 
 export default function PartidosScreen() {
+  const theme = useTheme();
+  const styles = createStyles(theme);
   const [partidos, setPartidos] = useState<Partido[]>([]);
   const [equipos, setEquipos] = useState<Equipo[]>([]);
   const [cargando, setCargando] = useState(true);
@@ -55,6 +59,7 @@ export default function PartidosScreen() {
   return (
     <ThemedView style={styles.pantalla}>
       <SafeAreaView edges={['bottom', 'left', 'right']} style={styles.contenido}>
+        <Button title="Programar partido" onPress={() => router.push('/partidos/nuevo')} />
         {cargando ? (
           <ThemedView style={styles.mensaje}>
             <ActivityIndicator accessibilityLabel="Cargando partidos" />
@@ -63,14 +68,14 @@ export default function PartidosScreen() {
         ) : error ? (
           <ThemedView style={styles.mensaje}>
             <ThemedText accessibilityRole="alert">{error}</ThemedText>
-            <Button title="Reintentar" onPress={() => setIntento((valor) => valor + 1)} />
+            <Button variant="secondary" title="Reintentar" onPress={() => setIntento((valor) => valor + 1)} />
           </ThemedView>
         ) : (
           <FlatList
             data={partidos}
             keyExtractor={(partido) => String(partido.id)}
             contentContainerStyle={styles.lista}
-            ListEmptyComponent={<ThemedText>No hay partidos disponibles.</ThemedText>}
+            ListEmptyComponent={<ThemedText style={[Visual.message, { backgroundColor: theme.backgroundElement }]}>No hay partidos disponibles.</ThemedText>}
             renderItem={({ item }) => (
               <Pressable
                 accessibilityRole="button"
@@ -93,16 +98,27 @@ export default function PartidosScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  pantalla: { flex: 1 },
-  contenido: {
-    flex: 1,
-    width: '100%',
-    maxWidth: MaxContentWidth,
-    alignSelf: 'center',
-    padding: Spacing.three,
-  },
-  lista: { gap: Spacing.two, paddingBottom: Spacing.three },
-  partido: { padding: Spacing.three, borderRadius: Spacing.two, gap: Spacing.one },
-  mensaje: { paddingVertical: Spacing.three, gap: Spacing.two },
-});
+const createStyles = (theme: ReturnType<typeof useTheme>) =>
+  StyleSheet.create({
+    pantalla: {
+      flex: 1,
+    },
+    contenido: {
+      flex: 1,
+      ...Visual.content,
+      backgroundColor: theme.background,
+    },
+    lista: {
+      gap: Spacing.two,
+      paddingBottom: Spacing.three,
+    },
+    partido: {
+      ...Visual.card,
+      backgroundColor: theme.backgroundElement,
+      borderColor: theme.border,
+    },
+    mensaje: {
+      paddingVertical: Spacing.three,
+      gap: Spacing.two,
+    },
+  });

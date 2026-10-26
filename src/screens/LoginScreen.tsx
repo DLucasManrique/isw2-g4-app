@@ -1,16 +1,18 @@
+import { AppButton as Button } from '@/components/app-button';
 import { useState } from 'react';
-import { ActivityIndicator, Button, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { Spacing, Visual } from '@/constants/theme';
 import { useSesion } from '@/contexts/SesionContext';
 import { useTheme } from '@/hooks/use-theme';
 import { iniciarSesion } from '@/services/authService';
 
 export default function LoginScreen() {
   const theme = useTheme();
+  const styles = createStyles(theme);
   const { guardarSesion, error: errorSesion } = useSesion();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -36,14 +38,16 @@ export default function LoginScreen() {
     }
   }
 
-  const estiloCampo = [styles.campo, { color: theme.text, borderColor: theme.textSecondary, backgroundColor: theme.backgroundElement }];
+  const estiloCampo = [styles.campo, { color: theme.text, borderColor: theme.border, backgroundColor: theme.backgroundElement }];
 
   return (
     <ThemedView style={styles.pantalla}>
       <SafeAreaView edges={['bottom', 'left', 'right']} style={styles.pantalla}>
         <KeyboardAvoidingView style={styles.pantalla} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={100}>
           <ScrollView contentContainerStyle={styles.contenido} keyboardShouldPersistTaps="handled">
+            <ThemedText type="smallBold" style={{ color: theme.primary }}>Liga Amateur Santafesina</ThemedText>
             <ThemedText type="title">Inicio de sesión</ThemedText>
+            <ThemedText themeColor="textSecondary">Ingresá para gestionar y seguir la liga.</ThemedText>
             <ThemedText>Usuario</ThemedText>
             <TextInput accessibilityLabel="Usuario" value={username} onChangeText={setUsername} autoCapitalize="none" autoCorrect={false} autoComplete="username" editable={!cargando} style={estiloCampo} />
             <ThemedText>Contraseña</ThemedText>
@@ -58,8 +62,23 @@ export default function LoginScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  pantalla: { flex: 1 },
-  contenido: { width: '100%', maxWidth: MaxContentWidth, alignSelf: 'center', padding: Spacing.three, gap: Spacing.two },
-  campo: { borderWidth: 1, borderRadius: Spacing.one, padding: Spacing.two, fontSize: 16, minHeight: 48 },
-});
+const createStyles = (theme: ReturnType<typeof useTheme>) =>
+  StyleSheet.create({
+    pantalla: {
+      flex: 1,
+    },
+    contenido: {
+      ...Visual.content,
+      maxWidth: 440,
+      paddingTop: 32,
+      paddingBottom: 32,
+      backgroundColor: theme.background,
+    },
+    campo: {
+      padding: Spacing.two,
+      ...Visual.input,
+      color: theme.text,
+      borderColor: theme.border,
+      backgroundColor: theme.backgroundElement,
+    },
+  });

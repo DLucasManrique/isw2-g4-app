@@ -10,6 +10,7 @@ export type EventoRequest = {
 
 export type EventoPartido = EventoRequest & {
   id: number;
+  partidoId: number;
 };
 
 export async function listarEventos(partidoId: number): Promise<EventoPartido[]> {

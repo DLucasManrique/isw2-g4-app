@@ -1,9 +1,11 @@
+import { Visual } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
+import { AppButton as Button } from '@/components/app-button';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  Button,
   FlatList,
   Pressable,
   ScrollView,
@@ -17,6 +19,8 @@ import { darDeBajaJugador, listarJugadores } from '../../services/jugadores';
 import { Jugador } from '../../types/jugador';
 
 export default function JugadoresScreen() {
+  const theme = useTheme();
+  const styles = createStyles(theme);
   const [jugadores, setJugadores] = useState<Jugador[]>([]);
   const [equipos, setEquipos] = useState<Equipo[]>([]);
   const [equipoId, setEquipoId] = useState<number | undefined>();
@@ -136,14 +140,14 @@ async function eliminarJugador(id: number) {
 
   return (
     <View style={styles.contenedor}>
-     <Text style={styles.titulo}>Jugadores</Text>
+     <Text style={[styles.texto, styles.titulo]}>Jugadores</Text>
 
 <Button
   title="Nuevo jugador"
   onPress={() => router.push('/jugadores/nuevo')}
 />
 
-<Text>Filtrar por equipo</Text>
+<Text style={styles.texto}>Filtrar por equipo</Text>
       <View>
         <ScrollView
           horizontal
@@ -157,7 +161,7 @@ async function eliminarJugador(id: number) {
               equipoId === undefined && styles.seleccionado,
             ]}
           >
-            <Text>Todos</Text>
+            <Text style={styles.texto}>Todos</Text>
           </Pressable>
 
           {equipos.map((equipo) => (
@@ -169,19 +173,19 @@ async function eliminarJugador(id: number) {
                 equipoId === equipo.id && styles.seleccionado,
               ]}
             >
-              <Text>{equipo.nombre}</Text>
+              <Text style={styles.texto}>{equipo.nombre}</Text>
             </Pressable>
           ))}
         </ScrollView>
       </View>
 
       {errorEquipos !== '' && (
-        <Text style={styles.error}>{errorEquipos}</Text>
+        <Text style={[styles.texto, styles.error]}>{errorEquipos}</Text>
       )}
 {errorOperacion !== '' && (
-  <Text style={styles.error}>{errorOperacion}</Text>
+  <Text style={[styles.texto, styles.error]}>{errorOperacion}</Text>
 )}
-      <Button
+      <Button variant="secondary"
         title="Actualizar"
         onPress={() => setRecarga((valor) => valor + 1)}
         disabled={cargando}
@@ -190,26 +194,26 @@ async function eliminarJugador(id: number) {
       {cargando ? (
         <ActivityIndicator size="large" />
       ) : error !== '' ? (
-        <Text style={styles.error}>{error}</Text>
+        <Text style={[styles.texto, styles.error]}>{error}</Text>
       ) : (
         <FlatList
           data={jugadores}
           keyExtractor={(jugador) => jugador.id.toString()}
           contentContainerStyle={styles.lista}
           ListEmptyComponent={
-            <Text>No hay jugadores activos para mostrar.</Text>
+            <Text style={[styles.texto, Visual.message, { backgroundColor: theme.backgroundElement }]}>No hay jugadores activos para mostrar.</Text>
           }
           renderItem={({ item }) => (
             <View style={styles.tarjeta}>
-              <Text style={styles.nombre}>
+              <Text style={[styles.texto, styles.nombre]}>
                 {item.nombre} {item.apellido}
               </Text>
-              <Text>Equipo: {nombreEquipo(item.equipoId)}</Text>
-              <Text>DNI: {item.dni}</Text>
-              <Text>
+              <Text style={styles.texto}>Equipo: {nombreEquipo(item.equipoId)}</Text>
+              <Text style={styles.texto}>DNI: {item.dni}</Text>
+              <Text style={styles.texto}>
                 Camiseta: {item.numeroCamiseta ?? 'Sin asignar'}
               </Text>
-            <Button
+            <Button variant="secondary"
   title="Editar jugador"
   onPress={() =>
     router.push({
@@ -218,9 +222,8 @@ async function eliminarJugador(id: number) {
     })
   }
 />
-<Button
+<Button variant="danger"
   title="Dar de baja"
-  color="#b00020"
   onPress={() => eliminarJugador(item.id)}
 />
             </View>
@@ -231,44 +234,48 @@ async function eliminarJugador(id: number) {
   );
 }
 
-const styles = StyleSheet.create({
-  contenedor: {
-    flex: 1,
-    padding: 20,
-    gap: 16,
-    backgroundColor: '#ffffff',
-  },
-  titulo: {
-    fontSize: 26,
-    fontWeight: 'bold',
-  },
-  filtros: {
-    gap: 8,
-  },
-  filtro: {
-    padding: 12,
-    borderRadius: 8,
-    backgroundColor: '#eeeeee',
-  },
-  seleccionado: {
-    backgroundColor: '#a7d5ff',
-  },
-  lista: {
-    paddingBottom: 100,
-    gap: 12,
-  },
-  tarjeta: {
-    padding: 16,
-    gap: 6,
-    borderWidth: 1,
-    borderColor: '#dddddd',
-    borderRadius: 8,
-  },
-  nombre: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  error: {
-    color: '#b00020',
-  },
-});
+const createStyles = (theme: ReturnType<typeof useTheme>) =>
+  StyleSheet.create({
+    texto: {
+      color: theme.text,
+      fontSize: 16,
+      lineHeight: 24,
+    },
+    contenedor: {
+      flex: 1,
+      ...Visual.content,
+      backgroundColor: theme.background,
+    },
+    titulo: {
+      ...Visual.title,
+    },
+    filtros: {
+      gap: 8,
+    },
+    filtro: {
+      padding: 12,
+      borderRadius: 8,
+      backgroundColor: theme.backgroundElement,
+    },
+    seleccionado: {
+      backgroundColor: theme.backgroundSelected,
+    },
+    lista: {
+      paddingBottom: 100,
+      gap: 12,
+    },
+    tarjeta: {
+      ...Visual.card,
+      backgroundColor: theme.backgroundElement,
+      borderColor: theme.border,
+    },
+    nombre: {
+      fontSize: 18,
+      fontWeight: 'bold',
+    },
+    error: {
+      ...Visual.message,
+      color: theme.danger,
+      backgroundColor: theme.dangerBackground,
+    },
+  });

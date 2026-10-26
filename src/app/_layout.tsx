@@ -35,6 +35,7 @@ function Navegacion() {
         <Stack.Screen name="posiciones/index" options={{ title: 'Tabla de posiciones' }} />
         <Stack.Screen name="suspendidos/index" options={{ title: 'Jugadores suspendidos' }} />
         <Stack.Screen name="partidos/index" options={{ title: 'Partidos' }} />
+        <Stack.Screen name="partidos/nuevo" options={{ title: 'Programar partido' }} />
         <Stack.Screen name="partidos/[id]/detalle" options={{ title: 'Detalle de partido' }} />
         <Stack.Screen name="partidos/[id]" options={{ title: 'Partido en vivo' }} />
         <Stack.Screen name="catalogo" options={{ title: 'Catálogo' }} />
