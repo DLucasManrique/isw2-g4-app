@@ -79,6 +79,7 @@ export default function HomeScreen() {
           </ThemedView>
 
           <Button title="Gestión de equipos" onPress={() => router.push('/equipos')} />
+          <Button title="Partidos" onPress={() => router.push('/partidos')} />
           {esAdmin && (
   <Button
     title="Gestión de usuarios"

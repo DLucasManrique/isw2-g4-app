@@ -45,6 +45,7 @@ export default function PartidoEnVivoScreen() {
 
   const cargarDatos = useCallback(async (version: number) => {
     const datos = await obtenerPartido(partidoId);
+    if (!datos) throw new Error('El partido no existe.');
     const [local, visitante, jugadoresLocal, jugadoresVisitante, lista] = await Promise.all([
       obtenerEquipo(datos.equipoLocalId),
       obtenerEquipo(datos.equipoVisitanteId),
