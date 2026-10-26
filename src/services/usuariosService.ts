@@ -10,6 +10,7 @@ async function verificarRespuesta(respuesta: Response) {
   const error = await respuesta.json().catch(() => null);
 
   const mensaje =
+    error?.detail ||
     error?.mensaje ||
     error?.message ||
     `Error al realizar la operación (${respuesta.status})`;
@@ -18,13 +19,13 @@ async function verificarRespuesta(respuesta: Response) {
 }
 
 export async function listarUsuarios(): Promise<Usuario[]> {
-  const respuesta = await fetch(`${API_URL}/usuarios`);
+  const respuesta = await fetch(`${API_URL}/api/usuarios`);
   await verificarRespuesta(respuesta);
   return respuesta.json();
 }
 
 export async function obtenerUsuario(id: number): Promise<Usuario> {
-  const respuesta = await fetch(`${API_URL}/usuarios/${id}`);
+  const respuesta = await fetch(`${API_URL}/api/usuarios/${id}`);
   await verificarRespuesta(respuesta);
   return respuesta.json();
 }
@@ -32,7 +33,7 @@ export async function obtenerUsuario(id: number): Promise<Usuario> {
 export async function crearUsuario(
   datos: UsuarioRequest
 ): Promise<Usuario> {
-  const respuesta = await fetch(`${API_URL}/usuarios`, {
+  const respuesta = await fetch(`${API_URL}/api/usuarios`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -48,7 +49,7 @@ export async function editarUsuario(
   id: number,
   datos: UsuarioRequest
 ): Promise<Usuario> {
-  const respuesta = await fetch(`${API_URL}/usuarios/${id}`, {
+  const respuesta = await fetch(`${API_URL}/api/usuarios/${id}`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -61,7 +62,7 @@ export async function editarUsuario(
 }
 
 export async function darDeBajaUsuario(id: number): Promise<void> {
-  const respuesta = await fetch(`${API_URL}/usuarios/${id}/baja`, {
+  const respuesta = await fetch(`${API_URL}/api/usuarios/${id}/baja`, {
     method: 'PATCH',
   });
 

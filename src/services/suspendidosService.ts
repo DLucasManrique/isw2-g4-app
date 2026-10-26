@@ -1,3 +1,4 @@
+import { API_URL } from '@/config/api';
 
 export interface JugadorSuspendido {
   jugadorId: number;
@@ -5,13 +6,12 @@ export interface JugadorSuspendido {
   apellido: string;
   equipoNombre: string;
   motivo: string;
-  fechasSancion: number;
+  partidoId: number;
 }
 
 export const suspendidosService = {
   obtenerSuspendidos: async (): Promise<JugadorSuspendido[]> => {
-    // Si usan fetch o axios según tu proyecto:
-    const response = await fetch('http://localhost:8080/api/suspendidos');
+    const response = await fetch(`${API_URL}/api/suspendidos`);
     if (!response.ok) {
       throw new Error('Error al obtener la lista de suspendidos');
     }

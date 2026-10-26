@@ -5,14 +5,16 @@ import { JugadorSuspendido, suspendidosService } from '../../services/suspendido
 export default function SuspendidosScreen() {
   const [suspendidos, setSuspendidos] = useState<JugadorSuspendido[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState('');
 
   const cargarDatos = async () => {
     setLoading(true);
+    setError('');
     try {
       const data = await suspendidosService.obtenerSuspendidos();
       setSuspendidos(data);
     } catch (error) {
-      console.error('Error al cargar suspendidos:', error);
+      setError(error instanceof Error ? error.message : 'No se pudieron cargar los suspendidos.');
     } finally {
       setLoading(false);
     }
@@ -26,27 +28,29 @@ export default function SuspendidosScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Jugadores Suspendidos</Text>
-        <TouchableOpacity style={styles.button} onPress={cargarDatos}>
+        <TouchableOpacity style={styles.button} onPress={cargarDatos} disabled={loading}>
           <Text style={styles.buttonText}>Actualizar</Text>
         </TouchableOpacity>
       </View>
 
       {loading ? (
         <ActivityIndicator size="large" color="#0000ff" />
+      ) : error ? (
+        <Text accessibilityRole="alert">{error}</Text>
       ) : suspendidos.length === 0 ? (
         <View style={styles.emptyCard}>
-          <Text style={styles.emptyText}>No hay jugadores suspendidos para la próxima fecha.</Text>
+          <Text style={styles.emptyText}>No hay jugadores suspendidos.</Text>
         </View>
       ) : (
         <FlatList
           data={suspendidos}
-          keyExtractor={(item) => item.jugadorId.toString()}
+          keyExtractor={(item) => `${item.partidoId}-${item.jugadorId}`}
           renderItem={({ item }) => (
             <View style={styles.card}>
               <Text style={styles.cardTitle}>{item.nombre} {item.apellido}</Text>
               <Text style={styles.cardSub}>Equipo: {item.equipoNombre}</Text>
               <Text style={styles.motivo}>Motivo: {item.motivo}</Text>
-              <Text style={styles.fechas}>Fechas de sanción: {item.fechasSancion}</Text>
+              <Text style={styles.cardSub}>Partido: {item.partidoId}</Text>
             </View>
           )}
         />
@@ -110,10 +114,5 @@ const styles = StyleSheet.create({
     color: '#d9534f',
     fontWeight: 'bold',
     marginTop: 4,
-  },
-  fechas: {
-    fontSize: 12,
-    color: '#777',
-    marginTop: 2,
   },
 });

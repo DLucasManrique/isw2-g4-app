@@ -16,6 +16,19 @@ export type Partido = {
   golesVisitante: number;
 };
 
+export type PartidoRequest = Pick<Partido,
+  'torneoId' | 'numeroFecha' | 'equipoLocalId' | 'equipoVisitanteId' |
+  'canchaId' | 'arbitroId' | 'fechaHoraInicio'>;
+
+export async function crearPartido(datos: PartidoRequest): Promise<Omit<Partido, 'golesLocal' | 'golesVisitante'>> {
+  const respuesta = await solicitarPartido('', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(datos),
+  });
+  return respuesta.json();
+}
+
 export async function solicitarPartido(ruta: string, opciones?: RequestInit, permitir404 = false): Promise<Response> {
   if (!API_URL) throw new Error('Falta configurar EXPO_PUBLIC_API_URL para conectar con el backend.');
 

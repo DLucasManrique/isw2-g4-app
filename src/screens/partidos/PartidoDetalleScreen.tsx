@@ -84,6 +84,7 @@ export default function PartidoDetalleScreen() {
               <ThemedText>Estado: {partido.estado}</ThemedText>
               <ThemedText>Fecha: {fecha ? fecha.split('-').reverse().join('/') : 'No disponible'}</ThemedText>
               <ThemedText>Hora: {hora?.slice(0, 5) || 'No disponible'}</ThemedText>
+              <Button title="Abrir partido en vivo" onPress={() => router.push({ pathname: '/partidos/[id]', params: { id: partido.id } })} />
             </>
           )}
           <Button title="Volver al listado" onPress={() => router.dismissTo('/partidos')} />

@@ -55,6 +55,7 @@ export default function PartidosScreen() {
   return (
     <ThemedView style={styles.pantalla}>
       <SafeAreaView edges={['bottom', 'left', 'right']} style={styles.contenido}>
+        <Button title="Programar partido" onPress={() => router.push('/partidos/nuevo')} />
         {cargando ? (
           <ThemedView style={styles.mensaje}>
             <ActivityIndicator accessibilityLabel="Cargando partidos" />

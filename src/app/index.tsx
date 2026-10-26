@@ -79,6 +79,9 @@ export default function HomeScreen() {
           </ThemedView>
 
           <Button title="Gestión de equipos" onPress={() => router.push('/equipos')} />
+          <Button title="Jugadores" onPress={() => router.push('/jugadores')} />
+          <Button title="Catálogo" onPress={() => router.push('/catalogo')} />
+          <Button title="Suspendidos" onPress={() => router.push('/suspendidos')} />
           <Button title="Partidos" onPress={() => router.push('/partidos')} />
           {esAdmin && (
   <Button
