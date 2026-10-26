@@ -1,10 +1,12 @@
+import { Visual } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
+import { AppButton as Button } from '@/components/app-button';
 
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
-    Button,
     FlatList,
     Platform,
     StyleSheet,
@@ -19,6 +21,8 @@ import {
 import { Usuario } from '../../types/usuario';
 
 export default function UsuariosScreen() {
+  const theme = useTheme();
+  const styles = createStyles(theme);
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
@@ -82,46 +86,46 @@ export default function UsuariosScreen() {
 
   return (
     <View style={styles.contenedor}>
-      <Text style={styles.titulo}>Gestión de usuarios</Text>
+      <Text style={[styles.texto, styles.titulo]}>Gestión de usuarios</Text>
 
       <Button
         title="Nuevo usuario"
         onPress={() => router.push('/usuarios/nuevo')}
       />
 
-      <Button
+      <Button variant="secondary"
         title="Actualizar"
         onPress={() => void cargarUsuarios()}
         disabled={cargando}
       />
 
       {errorOperacion !== '' && (
-        <Text style={styles.error}>{errorOperacion}</Text>
+        <Text style={[styles.texto, styles.error]}>{errorOperacion}</Text>
       )}
 
       {cargando ? (
         <ActivityIndicator size="large" />
       ) : error !== '' ? (
-        <Text style={styles.error}>{error}</Text>
+        <Text style={[styles.texto, styles.error]}>{error}</Text>
       ) : (
         <FlatList
           data={usuarios}
           keyExtractor={(usuario) => String(usuario.id)}
           contentContainerStyle={styles.lista}
-          ListEmptyComponent={<Text>No hay usuarios registrados.</Text>}
+          ListEmptyComponent={<Text style={[styles.texto, Visual.message, { backgroundColor: theme.backgroundElement }]}>No hay usuarios registrados.</Text>}
           renderItem={({ item }) => (
             <View style={styles.tarjeta}>
-              <Text style={styles.nombre}>{item.nombreCompleto}</Text>
-              <Text>Usuario: {item.username}</Text>
-              <Text>Rol: {item.rol}</Text>
+              <Text style={[styles.texto, styles.nombre]}>{item.nombreCompleto}</Text>
+              <Text style={styles.texto}>Usuario: {item.username}</Text>
+              <Text style={styles.texto}>Rol: {item.rol}</Text>
 
               <Text
-                style={item.activo ? styles.activo : styles.inactivo}
+                style={[styles.texto, item.activo ? styles.activo : styles.inactivo]}
               >
                 Estado: {item.activo ? 'Activo' : 'Inactivo'}
               </Text>
 
-              <Button
+              <Button variant="secondary"
                 title="Editar"
                 onPress={() =>
                   router.push({
@@ -132,9 +136,8 @@ export default function UsuariosScreen() {
               />
 
               {item.activo && (
-                <Button
+                <Button variant="danger"
                   title="Dar de baja"
-                  color="#b00020"
                   onPress={() => solicitarBaja(item)}
                 />
               )}
@@ -146,39 +149,43 @@ export default function UsuariosScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  contenedor: {
-    flex: 1,
-    padding: 20,
-    gap: 12,
-    backgroundColor: '#ffffff',
-  },
-  titulo: {
-    fontSize: 26,
-    fontWeight: 'bold',
-  },
-  lista: {
-    gap: 12,
-    paddingBottom: 60,
-  },
-  tarjeta: {
-    borderWidth: 1,
-    borderColor: '#dddddd',
-    borderRadius: 8,
-    padding: 15,
-    gap: 8,
-  },
-  nombre: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  activo: {
-    color: 'green',
-  },
-  inactivo: {
-    color: '#b00020',
-  },
-  error: {
-    color: '#b00020',
-  },
-});
+const createStyles = (theme: ReturnType<typeof useTheme>) =>
+  StyleSheet.create({
+    texto: {
+      color: theme.text,
+      fontSize: 16,
+      lineHeight: 24,
+    },
+    contenedor: {
+      flex: 1,
+      ...Visual.content,
+      backgroundColor: theme.background,
+    },
+    titulo: {
+      ...Visual.title,
+    },
+    lista: {
+      gap: 12,
+      paddingBottom: 60,
+    },
+    tarjeta: {
+      ...Visual.card,
+      backgroundColor: theme.backgroundElement,
+      borderColor: theme.border,
+    },
+    nombre: {
+      fontSize: 18,
+      fontWeight: 'bold',
+    },
+    activo: {
+      color: theme.success,
+    },
+    inactivo: {
+      color: theme.danger,
+    },
+    error: {
+      ...Visual.message,
+      color: theme.danger,
+      backgroundColor: theme.dangerBackground,
+    },
+  });

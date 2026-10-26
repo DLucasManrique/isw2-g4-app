@@ -1,36 +1,15 @@
-import * as Device from 'expo-device';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Button, Platform, ScrollView, StyleSheet, TextInput } from 'react-native';
+import { ScrollView, StyleSheet, TextInput, View, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
+import { AppButton } from '@/components/app-button';
+import { AppCard } from '@/components/app-card';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { Visual } from '@/constants/theme';
 import { useSesion } from '@/contexts/SesionContext';
 import { useTheme } from '@/hooks/use-theme';
-
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
-  return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
-  );
-}
 
 export default function HomeScreen() {
   const { usuario, cerrarSesion } = useSesion();
@@ -38,6 +17,7 @@ export default function HomeScreen() {
   const [cerrando, setCerrando] = useState(false);
   const [error, setError] = useState('');
   const theme = useTheme();
+  const { width } = useWindowDimensions();
   const [partidoId, setPartidoId] = useState('');
   const [errorPartido, setErrorPartido] = useState('');
 
@@ -66,57 +46,45 @@ export default function HomeScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.desplazable} keyboardShouldPersistTaps="handled">
-        <SafeAreaView style={styles.safeArea}>
-          <ThemedText>{usuario?.nombreCompleto}</ThemedText>
-          <Button title={cerrando ? 'Cerrando sesión…' : 'Cerrar sesión'} disabled={cerrando} onPress={() => void salir()} />
-          {!!error && <ThemedText accessibilityRole="alert">{error}</ThemedText>}
-          <ThemedView style={styles.heroSection}>
-            <AnimatedIcon />
-            <ThemedText type="title" style={styles.title}>
-              Welcome to&nbsp;Expo
-            </ThemedText>
-          </ThemedView>
-
-          <Button title="Gestión de equipos" onPress={() => router.push('/equipos')} />
-          <Button title="Jugadores" onPress={() => router.push('/jugadores')} />
-          <Button title="Catálogo" onPress={() => router.push('/catalogo')} />
-          <Button title="Suspendidos" onPress={() => router.push('/suspendidos')} />
-          <Button title="Partidos" onPress={() => router.push('/partidos')} />
-          {esAdmin && (
-  <Button
-    title="Gestión de usuarios"
-    onPress={() => router.push('/usuarios')}
-  />
-)}
-          <Button
-  title="Tabla de posiciones"
-  onPress={() => router.push('/posiciones')}
-/>
-          <ThemedView style={styles.accesoPartido}>
-            <ThemedText>ID del partido</ThemedText>
-            <TextInput accessibilityLabel="ID del partido" value={partidoId} onChangeText={setPartidoId} keyboardType="number-pad" style={{ color: theme.text, borderColor: theme.textSecondary, borderWidth: 1, borderRadius: Spacing.one, padding: Spacing.two, minHeight: 48 }} onSubmitEditing={abrirPartido} />
+      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        <SafeAreaView style={styles.content}>
+          <View style={styles.heading}>
+            <ThemedText type="smallBold" style={{ color: theme.primary }}>FÚTBOL DE SANTA FE</ThemedText>
+            <ThemedText type="title">Liga Amateur Santafesina</ThemedText>
+            <ThemedText themeColor="textSecondary">Gestión y seguimiento de nuestra liga.</ThemedText>
+          </View>
+          <AppCard>
+            <ThemedText type="smallBold">{usuario?.nombreCompleto}</ThemedText>
+            <ThemedText type="small" themeColor="textSecondary">Rol: {usuario?.rol}</ThemedText>
+            <AppButton variant="secondary" title={cerrando ? 'Cerrando sesión…' : 'Cerrar sesión'} disabled={cerrando} onPress={() => void salir()} />
+            {!!error && <ThemedText accessibilityRole="alert">{error}</ThemedText>}
+          </AppCard>
+          <ThemedText type="subtitle">Explorá la liga</ThemedText>
+          <View style={styles.grid}>
+            {[
+              { title: 'Equipos', description: 'Gestión de equipos de la liga', route: '/equipos' as const },
+              { title: 'Jugadores', description: 'Planteles y datos de jugadores', route: '/jugadores' as const },
+              { title: 'Catálogo', description: 'Torneos, canchas y árbitros', route: '/catalogo' as const },
+              { title: 'Partidos', description: 'Programación, resultados y seguimiento', route: '/partidos' as const },
+              { title: 'Tabla de posiciones', description: 'Clasificación por torneo', route: '/posiciones' as const },
+              { title: 'Suspendidos', description: 'Consulta de jugadores suspendidos', route: '/suspendidos' as const },
+              ...(esAdmin ? [{ title: 'Gestión de usuarios', description: 'Administración de usuarios', route: '/usuarios' as const }] : []),
+            ].map((item) => (
+              <AppCard key={item.route} style={[styles.access, { width: width >= 600 ? '48%' : '100%' }]} accessibilityLabel={item.title} onPress={() => router.push(item.route)}>
+                <ThemedText type="smallBold" style={{ color: theme.primary, fontSize: 18 }}>{item.title}</ThemedText>
+                <ThemedText type="small" themeColor="textSecondary">{item.description}</ThemedText>
+                <ThemedText type="smallBold" style={{ color: theme.primary }}>Ingresar →</ThemedText>
+              </AppCard>
+            ))}
+          </View>
+          <AppCard>
+            <ThemedText type="smallBold">Acceso directo por ID</ThemedText>
+            <ThemedText type="small" themeColor="textSecondary">Si conocés el ID, podés abrir directamente el partido en vivo.</ThemedText>
+            <ThemedText type="small">ID del partido</ThemedText>
+            <TextInput accessibilityLabel="ID del partido" value={partidoId} onChangeText={setPartidoId} keyboardType="number-pad" placeholder="ID del partido" placeholderTextColor={theme.textSecondary} style={[Visual.input, { color: theme.text, borderColor: theme.border, backgroundColor: theme.background }]} onSubmitEditing={abrirPartido} />
             {!!errorPartido && <ThemedText accessibilityRole="alert">{errorPartido}</ThemedText>}
-            <Button title="Abrir partido" onPress={abrirPartido} />
-          </ThemedView>
-
-          <ThemedText type="code" style={styles.code}>
-            get started
-          </ThemedText>
-
-          <ThemedView type="backgroundElement" style={styles.stepContainer}>
-            <HintRow
-              title="Try editing"
-              hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-            />
-            <HintRow title="Dev tools" hint={getDevMenuHint()} />
-            <HintRow
-              title="Fresh start"
-              hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-            />
-          </ThemedView>
-
-          {Platform.OS === 'web' && <WebBadge />}
+            <AppButton variant="secondary" title="Abrir partido" onPress={abrirPartido} />
+          </AppCard>
         </SafeAreaView>
       </ScrollView>
     </ThemedView>
@@ -124,40 +92,10 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  accesoPartido: { alignSelf: 'stretch', gap: Spacing.one },
-  desplazable: { flexGrow: 1, alignItems: 'center' },
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
-  },
-  safeArea: {
-    flex: 1,
-    width: '100%',
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
-  },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
-  },
-  title: {
-    textAlign: 'center',
-  },
-  code: {
-    textTransform: 'uppercase',
-  },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
-  },
+  container: { flex: 1 },
+  scroll: { flexGrow: 1, alignItems: 'center' },
+  content: { ...Visual.content, paddingBottom: 32 },
+  heading: { gap: 8, paddingVertical: 16 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 16 },
+  access: { minHeight: 144, justifyContent: 'space-between' },
 });

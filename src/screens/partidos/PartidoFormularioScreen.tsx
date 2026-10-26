@@ -1,11 +1,12 @@
+import { AppButton as Button } from '@/components/app-button';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Button, ScrollView, StyleSheet, TextInput } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { Spacing, Visual } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { getArbitros, getCanchas, getTorneos, type Arbitro, type Cancha, type Torneo } from '@/services/catalogoService';
 import { listarEquipos, type Equipo } from '@/services/equiposService';
@@ -13,6 +14,7 @@ import { crearPartido } from '@/services/partidosService';
 
 export default function PartidoFormularioScreen() {
   const theme = useTheme();
+  const styles = createStyles(theme);
   const [torneos, setTorneos] = useState<Torneo[]>([]);
   const [equipos, setEquipos] = useState<Equipo[]>([]);
   const [canchas, setCanchas] = useState<Cancha[]>([]);
@@ -99,16 +101,16 @@ export default function PartidoFormularioScreen() {
     return (
       <ThemedView style={styles.selector}>
         <ThemedText type="smallBold">{titulo}</ThemedText>
-        {opciones.length === 0 && <ThemedText>No hay opciones disponibles.</ThemedText>}
+        {opciones.length === 0 && <ThemedText style={[Visual.message, { backgroundColor: theme.backgroundElement }]}>No hay opciones disponibles.</ThemedText>}
         {opciones.map((item) => (
-          <Button key={item.id} title={`${seleccionado === item.id ? '✓ ' : ''}${item.nombre}`} disabled={guardando} onPress={() => seleccionar(item.id)} />
+          <Button selected={seleccionado === item.id} key={item.id} title={`${seleccionado === item.id ? '✓ ' : ''}${item.nombre}`} disabled={guardando} onPress={() => seleccionar(item.id)} />
         ))}
       </ThemedView>
     );
   }
 
   const equiposTorneo = equipos.filter((item) => item.torneoId === torneoId);
-  const estiloCampo = [styles.campo, { color: theme.text, borderColor: theme.textSecondary }];
+  const estiloCampo = [styles.campo, { color: theme.text, borderColor: theme.border }];
 
   return (
     <ThemedView style={styles.pantalla}>
@@ -117,7 +119,7 @@ export default function PartidoFormularioScreen() {
           {cargando ? <ActivityIndicator accessibilityLabel="Cargando opciones del partido" /> : errorCarga ? (
             <>
               <ThemedText accessibilityRole="alert">{errorCarga}</ThemedText>
-              <Button title="Reintentar" onPress={() => setIntento((valor) => valor + 1)} />
+              <Button variant="secondary" title="Reintentar" onPress={() => setIntento((valor) => valor + 1)} />
             </>
           ) : (
             <>
@@ -144,16 +146,32 @@ export default function PartidoFormularioScreen() {
               <Button title={guardando ? 'Guardando…' : 'Programar partido'} disabled={guardando} onPress={() => void guardar()} />
             </>
           )}
-          <Button title="Cancelar" disabled={guardando} onPress={() => router.dismissTo('/partidos')} />
+          <Button variant="secondary" title="Cancelar" disabled={guardando} onPress={() => router.dismissTo('/partidos')} />
         </ScrollView>
       </SafeAreaView>
     </ThemedView>
   );
 }
 
-const styles = StyleSheet.create({
-  pantalla: { flex: 1 },
-  contenido: { width: '100%', maxWidth: MaxContentWidth, alignSelf: 'center', padding: Spacing.three, gap: Spacing.two },
-  selector: { gap: Spacing.one },
-  campo: { borderWidth: 1, borderRadius: Spacing.one, padding: Spacing.two, fontSize: 16, minHeight: 48 },
-});
+const createStyles = (theme: ReturnType<typeof useTheme>) =>
+  StyleSheet.create({
+    pantalla: {
+      flex: 1,
+    },
+    contenido: {
+      ...Visual.content,
+      backgroundColor: theme.background,
+    },
+    selector: {
+      ...Visual.card,
+      backgroundColor: theme.backgroundElement,
+      borderColor: theme.border,
+    },
+    campo: {
+      padding: Spacing.two,
+      ...Visual.input,
+      color: theme.text,
+      borderColor: theme.border,
+      backgroundColor: theme.backgroundElement,
+    },
+  });

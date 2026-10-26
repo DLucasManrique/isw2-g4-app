@@ -1,9 +1,11 @@
+import { Visual } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
+import { AppButton as Button } from '@/components/app-button';
 
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Button,
   ScrollView,
   StyleSheet,
   Text,
@@ -16,6 +18,8 @@ import {
 } from '../../services/jugadores';
 
 export default function EditarJugadorScreen() {
+  const theme = useTheme();
+  const styles = createStyles(theme);
   const { id } = useLocalSearchParams<{ id: string }>();
 
   const [equipoId, setEquipoId] = useState<number | null>(null);
@@ -120,11 +124,11 @@ export default function EditarJugadorScreen() {
 if (equipoId === null) {
   return (
     <ScrollView contentContainerStyle={styles.contenedor}>
-      <Text style={styles.titulo}>Editar jugador</Text>
-      <Text style={styles.error}>
+      <Text style={[styles.texto, styles.titulo]}>Editar jugador</Text>
+      <Text style={[styles.texto, styles.error]}>
         {error || 'No se pudo cargar el jugador'}
       </Text>
-      <Button
+      <Button variant="secondary"
         title="Volver"
         onPress={() => router.replace('/jugadores')}
       />
@@ -133,41 +137,46 @@ if (equipoId === null) {
 }
   return (
     <ScrollView contentContainerStyle={styles.contenedor}>
-      <Text style={styles.titulo}>Editar jugador</Text>
+      <Text style={[styles.texto, styles.titulo]}>Editar jugador</Text>
 
-      <Text>Nombre *</Text>
+      <Text style={styles.texto}>Nombre *</Text>
       <TextInput
+        placeholderTextColor={theme.textSecondary}
         style={styles.input}
         value={nombre}
         onChangeText={setNombre}
         maxLength={60}
       />
 
-      <Text>Apellido *</Text>
+      <Text style={styles.texto}>Apellido *</Text>
       <TextInput
+        placeholderTextColor={theme.textSecondary}
         style={styles.input}
         value={apellido}
         onChangeText={setApellido}
         maxLength={60}
       />
 
-      <Text>DNI *</Text>
+      <Text style={styles.texto}>DNI *</Text>
       <TextInput
+        placeholderTextColor={theme.textSecondary}
         style={styles.input}
         value={dni}
         onChangeText={setDni}
         maxLength={10}
       />
 
-      <Text>Equipo (no modificable)</Text>
+      <Text style={styles.texto}>Equipo (no modificable)</Text>
       <TextInput
+        placeholderTextColor={theme.textSecondary}
         style={styles.input}
         value={equipoId?.toString() ?? ''}
         editable={false}
       />
 
-      <Text>Número de camiseta (opcional)</Text>
+      <Text style={styles.texto}>Número de camiseta (opcional)</Text>
       <TextInput
+        placeholderTextColor={theme.textSecondary}
         style={styles.input}
         value={camiseta}
         onChangeText={setCamiseta}
@@ -176,11 +185,11 @@ if (equipoId === null) {
       />
 
       {error !== '' && (
-        <Text style={styles.error}>{error}</Text>
+        <Text style={[styles.texto, styles.error]}>{error}</Text>
       )}
 
       {mensaje !== '' && (
-        <Text style={styles.mensaje}>{mensaje}</Text>
+        <Text style={[styles.texto, styles.mensaje]}>{mensaje}</Text>
       )}
 
       <Button
@@ -189,7 +198,7 @@ if (equipoId === null) {
         disabled={guardando || equipoId === null}
       />
 
-      <Button
+      <Button variant="secondary"
         title="Cancelar"
         onPress={() => router.replace('/jugadores')}
       />
@@ -197,28 +206,35 @@ if (equipoId === null) {
   );
 }
 
-const styles = StyleSheet.create({
-  contenedor: {
-    padding: 20,
-    gap: 12,
-    backgroundColor: '#ffffff',
-    flexGrow: 1,
-  },
-  titulo: {
-    fontSize: 26,
-    fontWeight: 'bold',
-    marginBottom: 10,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#cccccc',
-    borderRadius: 8,
-    padding: 12,
-  },
-  error: {
-    color: '#b00020',
-  },
-  mensaje: {
-    color: 'green',
-  },
-});
+const createStyles = (theme: ReturnType<typeof useTheme>) =>
+  StyleSheet.create({
+    texto: {
+      color: theme.text,
+      fontSize: 16,
+      lineHeight: 24,
+    },
+    contenedor: {
+      flexGrow: 1,
+      ...Visual.content,
+      backgroundColor: theme.background,
+    },
+    titulo: {
+      marginBottom: 10,
+      ...Visual.title,
+    },
+    input: {
+      padding: 12,
+      ...Visual.input,
+      color: theme.text,
+      borderColor: theme.border,
+      backgroundColor: theme.backgroundElement,
+    },
+    error: {
+      ...Visual.message,
+      color: theme.danger,
+      backgroundColor: theme.dangerBackground,
+    },
+    mensaje: {
+      color: theme.success,
+    },
+  });

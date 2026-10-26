@@ -23,6 +23,8 @@ export function ThemedText({ style, type = 'default', themeColor, ...rest }: The
         type === 'link' && styles.link,
         type === 'linkPrimary' && styles.linkPrimary,
         type === 'code' && styles.code,
+        rest.accessibilityRole === 'alert' && { color: theme.danger, backgroundColor: theme.dangerBackground, padding: 12, borderRadius: 8 },
+        rest.accessibilityLiveRegion === 'polite' && { color: theme.success, backgroundColor: theme.successBackground, padding: 12, borderRadius: 8 },
         style,
       ]}
       {...rest}
@@ -47,13 +49,13 @@ const styles = StyleSheet.create({
     fontWeight: 500,
   },
   title: {
-    fontSize: 48,
+    fontSize: 30,
     fontWeight: 600,
-    lineHeight: 52,
+    lineHeight: 38,
   },
   subtitle: {
-    fontSize: 32,
-    lineHeight: 44,
+    fontSize: 22,
+    lineHeight: 30,
     fontWeight: 600,
   },
   link: {

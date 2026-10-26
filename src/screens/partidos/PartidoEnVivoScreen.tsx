@@ -1,11 +1,12 @@
+import { AppButton as Button } from '@/components/app-button';
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
-import { ActivityIndicator, Button, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { Spacing, Visual } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { obtenerEquipo, type Equipo } from '@/services/equiposService';
 import { corregirEvento, eliminarEvento, listarEventos, registrarEvento, type EventoPartido, type TipoEvento } from '@/services/eventosPartidoService';
@@ -17,6 +18,7 @@ export default function PartidoEnVivoScreen() {
   const partidoId = typeof id === 'string' && /^\d+$/.test(id) ? Number(id) : NaN;
   const idValido = Number.isSafeInteger(partidoId) && partidoId > 0 && partidoId <= 2147483647;
   const theme = useTheme();
+  const styles = createStyles(theme);
   const [partido, setPartido] = useState<Partido | null>(null);
   const [equipos, setEquipos] = useState<Equipo[]>([]);
   const [jugadores, setJugadores] = useState<Jugador[]>([]);
@@ -193,7 +195,7 @@ export default function PartidoEnVivoScreen() {
     }
   }
 
-  const estiloCampo = [styles.campo, { color: theme.text, borderColor: theme.textSecondary, backgroundColor: theme.backgroundElement }];
+  const estiloCampo = [styles.campo, { color: theme.text, borderColor: theme.border, backgroundColor: theme.backgroundElement }];
 
   return (
     <ThemedView style={styles.pantalla}>
@@ -204,7 +206,7 @@ export default function PartidoEnVivoScreen() {
             {procesando && <ActivityIndicator accessibilityLabel="Procesando operación" />}
             {!!error && <ThemedText accessibilityRole="alert">{error}</ThemedText>}
             {!!mensaje && <ThemedText accessibilityLiveRegion="polite">{mensaje}</ThemedText>}
-            {idValido && <Button title={error ? 'Reintentar / Actualizar' : 'Actualizar'} disabled={cargando || procesando} onPress={() => void actualizar()} />}
+            {idValido && <Button variant="secondary" title={error ? 'Reintentar / Actualizar' : 'Actualizar'} disabled={cargando || procesando} onPress={() => void actualizar()} />}
             {partido && (
               <>
                 <ThemedText type="subtitle">{nombreEquipo(partido.equipoLocalId)} vs. {nombreEquipo(partido.equipoVisitanteId)}</ThemedText>
@@ -215,24 +217,24 @@ export default function PartidoEnVivoScreen() {
                 {!actualizado && <ThemedText>Actualiza para habilitar operaciones. Los datos visibles pueden estar desactualizados.</ThemedText>}
                 {partido.estado === 'PROGRAMADO' && <Button title="Iniciar partido" disabled={bloqueado} onPress={() => void ejecutar(() => cambiarEstadoPartido(partidoId, 'EN_JUEGO'), 'Partido iniciado.')} />}
                 {enJuego && <Button title="Finalizar" disabled={bloqueado} onPress={() => setConfirmacion({ estado: 'FINALIZADO' })} />}
-                {(partido.estado === 'PROGRAMADO' || enJuego) && <Button title="Suspender" disabled={bloqueado} onPress={() => setConfirmacion({ estado: 'SUSPENDIDO' })} />}
+                {(partido.estado === 'PROGRAMADO' || enJuego) && <Button variant="danger" title="Suspender" disabled={bloqueado} onPress={() => setConfirmacion({ estado: 'SUSPENDIDO' })} />}
                 {confirmacion && (
                   <ThemedView type="backgroundElement" style={styles.bloque}>
                     <ThemedText>{'eventoId' in confirmacion ? '¿Eliminar este evento definitivamente?' : confirmacion.estado === 'FINALIZADO' ? '¿Finalizar el partido? No se podrán realizar más cambios.' : '¿Suspender el partido? No se podrán realizar más cambios.'}</ThemedText>
                     <Button title="Confirmar" disabled={bloqueado} onPress={confirmar} />
-                    <Button title="Cancelar" disabled={procesando} onPress={() => setConfirmacion(null)} />
+                    <Button variant="secondary" title="Cancelar" disabled={procesando} onPress={() => setConfirmacion(null)} />
                   </ThemedView>
                 )}
                 <ThemedText type="subtitle">Eventos</ThemedText>
-                {eventos.length === 0 && <ThemedText>No hay eventos registrados.</ThemedText>}
+                {eventos.length === 0 && <ThemedText style={[Visual.message, { backgroundColor: theme.backgroundElement }]}>No hay eventos registrados.</ThemedText>}
                 {eventos.map((evento) => (
                   <ThemedView key={evento.id} type="backgroundElement" style={styles.bloque}>
                     <ThemedText>{evento.minuto}′ — {evento.tipo}</ThemedText>
                     <ThemedText>{nombreJugador(evento.jugadorId)}</ThemedText>
                     {enJuego && (
                       <>
-                        <Button title={`Corregir evento ${evento.id}`} disabled={bloqueado} onPress={() => editar(evento)} />
-                        <Button title={`Eliminar evento ${evento.id}`} disabled={bloqueado} onPress={() => setConfirmacion({ eventoId: evento.id })} />
+                        <Button variant="secondary" title={`Corregir evento ${evento.id}`} disabled={bloqueado} onPress={() => editar(evento)} />
+                        <Button variant="danger" title={`Eliminar evento ${evento.id}`} disabled={bloqueado} onPress={() => setConfirmacion({ eventoId: evento.id })} />
                       </>
                     )}
                   </ThemedView>
@@ -241,17 +243,17 @@ export default function PartidoEnVivoScreen() {
                   <ThemedView style={styles.bloque}>
                     <ThemedText type="subtitle">{editando !== null ? `Corregir evento ${editando}` : 'Registrar evento'}</ThemedText>
                     <ThemedText>Jugador: {jugadorId ? nombreJugador(jugadorId) : 'Sin seleccionar'}</ThemedText>
-                    <Button title={mostrarJugadores ? 'Ocultar jugadores' : 'Seleccionar jugador'} disabled={bloqueado} onPress={() => setMostrarJugadores(!mostrarJugadores)} />
+                    <Button variant="secondary" title={mostrarJugadores ? 'Ocultar jugadores' : 'Seleccionar jugador'} disabled={bloqueado} onPress={() => setMostrarJugadores(!mostrarJugadores)} />
                     {mostrarJugadores && jugadores.map((jugador) => (
                       <Button key={jugador.id} title={nombreJugador(jugador.id)} disabled={bloqueado} onPress={() => { setJugadorId(jugador.id); setMostrarJugadores(false); }} />
                     ))}
-                    {jugadores.length === 0 && <ThemedText>No hay jugadores disponibles para estos equipos.</ThemedText>}
+                    {jugadores.length === 0 && <ThemedText style={[Visual.message, { backgroundColor: theme.backgroundElement }]}>No hay jugadores disponibles para estos equipos.</ThemedText>}
                     <ThemedText>Tipo: {tipo ?? 'Sin seleccionar'}</ThemedText>
                     {(['GOL', 'AMARILLA', 'ROJA'] as const).map((opcion) => <Button key={opcion} title={opcion} disabled={bloqueado} onPress={() => setTipo(opcion)} />)}
                     <ThemedText>Minuto (1 a 120)</ThemedText>
                     <TextInput accessibilityLabel="Minuto" value={minuto} onChangeText={setMinuto} keyboardType="number-pad" editable={!bloqueado} style={estiloCampo} />
                     <Button title={editando !== null ? 'Guardar corrección' : 'Registrar evento'} disabled={bloqueado || jugadores.length === 0} onPress={guardarEvento} />
-                    {editando !== null && <Button title="Cancelar edición" disabled={procesando} onPress={limpiarFormulario} />}
+                    {editando !== null && <Button variant="secondary" title="Cancelar edición" disabled={procesando} onPress={limpiarFormulario} />}
                   </ThemedView>
                 )}
               </>
@@ -263,9 +265,25 @@ export default function PartidoEnVivoScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  pantalla: { flex: 1 },
-  contenido: { width: '100%', maxWidth: MaxContentWidth, alignSelf: 'center', padding: Spacing.three, gap: Spacing.two },
-  bloque: { padding: Spacing.two, borderRadius: Spacing.one, gap: Spacing.two },
-  campo: { borderWidth: 1, borderRadius: Spacing.one, padding: Spacing.two, fontSize: 16, minHeight: 48 },
-});
+const createStyles = (theme: ReturnType<typeof useTheme>) =>
+  StyleSheet.create({
+    pantalla: {
+      flex: 1,
+    },
+    contenido: {
+      ...Visual.content,
+      backgroundColor: theme.background,
+    },
+    bloque: {
+      ...Visual.card,
+      backgroundColor: theme.backgroundElement,
+      borderColor: theme.border,
+    },
+    campo: {
+      padding: Spacing.two,
+      ...Visual.input,
+      color: theme.text,
+      borderColor: theme.border,
+      backgroundColor: theme.backgroundElement,
+    },
+  });

@@ -1,9 +1,11 @@
+import { Visual } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
+import { AppButton as Button } from '@/components/app-button';
 
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Button,
   ScrollView,
   StyleSheet,
   Text,
@@ -17,6 +19,8 @@ import {
 } from '../../services/usuariosService';
 
 export default function EditarUsuarioScreen() {
+  const theme = useTheme();
+  const styles = createStyles(theme);
   const { id } = useLocalSearchParams<{ id: string }>();
 
   const [username, setUsername] = useState('');
@@ -92,8 +96,8 @@ export default function EditarUsuarioScreen() {
   if (!cargado) {
     return (
       <View style={styles.contenedor}>
-        <Text style={styles.error}>{error}</Text>
-        <Button
+        <Text style={[styles.texto, styles.error]}>{error}</Text>
+        <Button variant="secondary"
           title="Volver"
           onPress={() => router.replace('/usuarios')}
         />
@@ -103,24 +107,27 @@ export default function EditarUsuarioScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.contenedor}>
-      <Text style={styles.titulo}>Editar usuario</Text>
+      <Text style={[styles.texto, styles.titulo]}>Editar usuario</Text>
 
-      <Text>Nombre completo *</Text>
+      <Text style={styles.texto}>Nombre completo *</Text>
       <TextInput
+        placeholderTextColor={theme.textSecondary}
         style={styles.input}
         value={nombreCompleto}
         onChangeText={setNombreCompleto}
       />
 
-      <Text>Nombre de usuario (no modificable)</Text>
+      <Text style={styles.texto}>Nombre de usuario (no modificable)</Text>
 <TextInput
+  placeholderTextColor={theme.textSecondary}
   style={styles.input}
   value={username}
   editable={false}
 />
 
-      <Text>Nueva contraseña (opcional)</Text>
+      <Text style={styles.texto}>Nueva contraseña (opcional)</Text>
       <TextInput
+        placeholderTextColor={theme.textSecondary}
         style={styles.input}
         value={password}
         onChangeText={setPassword}
@@ -128,21 +135,21 @@ export default function EditarUsuarioScreen() {
         placeholder="Dejar vacío para no cambiar"
       />
 
-      <Text>Rol *</Text>
+      <Text style={styles.texto}>Rol *</Text>
       <View style={styles.roles}>
-        <Button
+        <Button selected={rol === 'ADMIN'}
           title={rol === 'ADMIN' ? '✓ ADMIN' : 'ADMIN'}
           onPress={() => setRol('ADMIN')}
         />
-        <Button
+        <Button selected={rol === 'DELEGADO'}
           title={rol === 'DELEGADO' ? '✓ DELEGADO' : 'DELEGADO'}
           onPress={() => setRol('DELEGADO')}
         />
       </View>
 
-      <Text>Estado: {activo ? 'Activo' : 'Inactivo'}</Text>
+      <Text style={styles.texto}>Estado: {activo ? 'Activo' : 'Inactivo'}</Text>
 
-      {error !== '' && <Text style={styles.error}>{error}</Text>}
+      {error !== '' && <Text style={[styles.texto, styles.error]}>{error}</Text>}
 
       <Button
         title={guardando ? 'Guardando...' : 'Guardar cambios'}
@@ -150,7 +157,7 @@ export default function EditarUsuarioScreen() {
         disabled={guardando}
       />
 
-      <Button
+      <Button variant="secondary"
         title="Cancelar"
         onPress={() => router.replace('/usuarios')}
       />
@@ -158,28 +165,35 @@ export default function EditarUsuarioScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  contenedor: {
-    padding: 20,
-    gap: 12,
-    flexGrow: 1,
-    backgroundColor: '#ffffff',
-  },
-  titulo: {
-    fontSize: 26,
-    fontWeight: 'bold',
-    marginBottom: 10,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#cccccc',
-    borderRadius: 8,
-    padding: 12,
-  },
-  roles: {
-    gap: 8,
-  },
-  error: {
-    color: '#b00020',
-  },
-});
+const createStyles = (theme: ReturnType<typeof useTheme>) =>
+  StyleSheet.create({
+    texto: {
+      color: theme.text,
+      fontSize: 16,
+      lineHeight: 24,
+    },
+    contenedor: {
+      flexGrow: 1,
+      ...Visual.content,
+      backgroundColor: theme.background,
+    },
+    titulo: {
+      marginBottom: 10,
+      ...Visual.title,
+    },
+    input: {
+      padding: 12,
+      ...Visual.input,
+      color: theme.text,
+      borderColor: theme.border,
+      backgroundColor: theme.backgroundElement,
+    },
+    roles: {
+      gap: 8,
+    },
+    error: {
+      ...Visual.message,
+      color: theme.danger,
+      backgroundColor: theme.dangerBackground,
+    },
+  });

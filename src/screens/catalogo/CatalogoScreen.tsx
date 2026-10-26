@@ -1,8 +1,13 @@
+import { Visual } from '@/constants/theme';
+import { AppButton as Button } from '@/components/app-button';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Button, FlatList, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
+import { useTheme } from '@/hooks/use-theme';
 import { getArbitros, getCanchas, getTorneos, type Arbitro, type Cancha, type Torneo } from '../../services/catalogoService';
 
 export default function CatalogoScreen() {
+  const theme = useTheme();
+  const styles = createStyles(theme);
   const [seccion, setSeccion] = useState<'torneos' | 'canchas' | 'arbitros'>('torneos');
   const [datos, setDatos] = useState<(Torneo | Cancha | Arbitro)[]>([]);
   const [error, setError] = useState('');
@@ -29,24 +34,25 @@ export default function CatalogoScreen() {
   }, [seccion, intento]);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={styles.botones}>
-        <Button title="Torneos" onPress={() => setSeccion('torneos')} />
-        <Button title="Canchas" onPress={() => setSeccion('canchas')} />
-        <Button title="Árbitros" onPress={() => setSeccion('arbitros')} />
+        <Button selected={seccion === 'torneos'} title="Torneos" onPress={() => setSeccion('torneos')} />
+        <Button selected={seccion === 'canchas'} title="Canchas" onPress={() => setSeccion('canchas')} />
+        <Button selected={seccion === 'arbitros'} title="Árbitros" onPress={() => setSeccion('arbitros')} />
       </View>
 
       {cargando ? <ActivityIndicator /> : error ? (
         <View>
-          <Text accessibilityRole="alert">{error}</Text>
-          <Button title="Reintentar" onPress={() => setIntento((valor) => valor + 1)} />
+          <Text style={[Visual.message, { color: theme.danger, backgroundColor: theme.dangerBackground }]} accessibilityRole="alert">{error}</Text>
+          <Button variant="secondary" title="Reintentar" onPress={() => setIntento((valor) => valor + 1)} />
         </View>
       ) : <FlatList
         data={datos}
+        contentContainerStyle={{ gap: 12, paddingBottom: 16 }}
         keyExtractor={(item, index) => index.toString()}
         renderItem={({ item }) => (
           <View style={styles.card}>
-            <Text style={styles.texto}>
+            <Text style={[styles.texto, { color: theme.text }]}>
               {'apellido' in item ? `${item.nombre} ${item.apellido}` : item.nombre}
             </Text>
           </View>
@@ -56,22 +62,28 @@ export default function CatalogoScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
-  },
-  botones: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 16,
-  },
-  card: {
-    padding: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
-  },
-  texto: {
-    fontSize: 16,
-  },
-});
+const createStyles = (theme: ReturnType<typeof useTheme>) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      ...Visual.content,
+      backgroundColor: theme.background,
+    },
+    botones: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 8,
+      marginBottom: 16,
+    },
+    card: {
+      borderBottomWidth: 1,
+      borderBottomColor: theme.border,
+      ...Visual.card,
+      backgroundColor: theme.backgroundElement,
+      borderColor: theme.border,
+    },
+    texto: {
+      fontSize: 16,
+      lineHeight: 24,
+    },
+  });

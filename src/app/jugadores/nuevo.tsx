@@ -1,10 +1,12 @@
+import { Visual } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
+import { AppButton as Button } from '@/components/app-button';
 
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  Button,
   ScrollView,
   StyleSheet,
   Text,
@@ -15,6 +17,8 @@ import { Equipo, listarEquipos } from '../../services/equipos';
 import { crearJugador } from '../../services/jugadores';
 
 export default function NuevoJugadorScreen() {
+  const theme = useTheme();
+  const styles = createStyles(theme);
   const [nombre, setNombre] = useState('');
   const [apellido, setApellido] = useState('');
   const [dni, setDni] = useState('');
@@ -102,10 +106,11 @@ export default function NuevoJugadorScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.contenedor}>
-      <Text style={styles.titulo}>Registrar jugador</Text>
+      <Text style={[styles.texto, styles.titulo]}>Registrar jugador</Text>
 
-      <Text>Nombre *</Text>
+      <Text style={styles.texto}>Nombre *</Text>
       <TextInput
+        placeholderTextColor={theme.textSecondary}
         style={styles.input}
         value={nombre}
         onChangeText={setNombre}
@@ -113,8 +118,9 @@ export default function NuevoJugadorScreen() {
         maxLength={60}
       />
 
-      <Text>Apellido *</Text>
+      <Text style={styles.texto}>Apellido *</Text>
       <TextInput
+        placeholderTextColor={theme.textSecondary}
         style={styles.input}
         value={apellido}
         onChangeText={setApellido}
@@ -122,8 +128,9 @@ export default function NuevoJugadorScreen() {
         maxLength={60}
       />
 
-      <Text>DNI *</Text>
+      <Text style={styles.texto}>DNI *</Text>
       <TextInput
+        placeholderTextColor={theme.textSecondary}
         style={styles.input}
         value={dni}
         onChangeText={setDni}
@@ -131,12 +138,12 @@ export default function NuevoJugadorScreen() {
         maxLength={10}
       />
 
-      <Text>Equipo *</Text>
+      <Text style={styles.texto}>Equipo *</Text>
 
       {cargandoEquipos ? (
         <ActivityIndicator />
       ) : equipos.length === 0 ? (
-        <Text>No hay equipos disponibles.</Text>
+        <Text style={[styles.texto, Visual.message, { backgroundColor: theme.backgroundElement }]}>No hay equipos disponibles.</Text>
       ) : (
         equipos.map((equipo) => (
           <Button
@@ -151,8 +158,9 @@ export default function NuevoJugadorScreen() {
         ))
       )}
 
-      <Text>Número de camiseta (opcional)</Text>
+      <Text style={styles.texto}>Número de camiseta (opcional)</Text>
       <TextInput
+        placeholderTextColor={theme.textSecondary}
         style={styles.input}
         value={camiseta}
         onChangeText={setCamiseta}
@@ -160,7 +168,7 @@ export default function NuevoJugadorScreen() {
         keyboardType="number-pad"
       />
 
-      {error !== '' && <Text style={styles.error}>{error}</Text>}
+      {error !== '' && <Text style={[styles.texto, styles.error]}>{error}</Text>}
 
       <Button
         title={cargando ? 'Guardando...' : 'Guardar jugador'}
@@ -168,7 +176,7 @@ export default function NuevoJugadorScreen() {
         disabled={cargando || cargandoEquipos || equipos.length === 0}
       />
 
-      <Button
+      <Button variant="secondary"
         title="Cancelar"
         onPress={() => router.replace('/jugadores')}
       />
@@ -176,25 +184,32 @@ export default function NuevoJugadorScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  contenedor: {
-    padding: 20,
-    gap: 12,
-    backgroundColor: '#ffffff',
-    flexGrow: 1,
-  },
-  titulo: {
-    fontSize: 26,
-    fontWeight: 'bold',
-    marginBottom: 10,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#cccccc',
-    borderRadius: 8,
-    padding: 12,
-  },
-  error: {
-    color: '#b00020',
-  },
-});
+const createStyles = (theme: ReturnType<typeof useTheme>) =>
+  StyleSheet.create({
+    texto: {
+      color: theme.text,
+      fontSize: 16,
+      lineHeight: 24,
+    },
+    contenedor: {
+      flexGrow: 1,
+      ...Visual.content,
+      backgroundColor: theme.background,
+    },
+    titulo: {
+      marginBottom: 10,
+      ...Visual.title,
+    },
+    input: {
+      padding: 12,
+      ...Visual.input,
+      color: theme.text,
+      borderColor: theme.border,
+      backgroundColor: theme.backgroundElement,
+    },
+    error: {
+      ...Visual.message,
+      color: theme.danger,
+      backgroundColor: theme.dangerBackground,
+    },
+  });

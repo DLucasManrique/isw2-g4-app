@@ -1,8 +1,10 @@
+import { Visual } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
+import { AppButton as Button } from '@/components/app-button';
 
 import { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
-    Button,
     ScrollView,
     StyleSheet,
     View,
@@ -20,6 +22,8 @@ type Torneo = {
 };
 
 export default function PosicionesScreen() {
+  const theme = useTheme();
+  const styles = createStyles(theme);
   const [torneos, setTorneos] = useState<Torneo[]>([]);
   const [torneoId, setTorneoId] = useState<number | null>(null);
   const [posiciones, setPosiciones] = useState<Posicion[]>([]);
@@ -105,6 +109,7 @@ useEffect(() => {
             key={indice}
             style={[
               styles.celda,
+              encabezado && { backgroundColor: theme.backgroundSelected, color: theme.primary },
               indice === 1 && styles.nombre,
               encabezado && styles.encabezado,
             ]}
@@ -128,11 +133,11 @@ useEffect(() => {
         {cargando ? (
           <ActivityIndicator />
         ) : torneos.length === 0 ? (
-          <ThemedText>No hay torneos disponibles.</ThemedText>
+          <ThemedText style={[Visual.message, { backgroundColor: theme.backgroundElement }]}>No hay torneos disponibles.</ThemedText>
         ) : (
           <View style={styles.torneos}>
             {torneos.map((torneo) => (
-              <Button
+              <Button selected={torneo.id === torneoId}
                 key={torneo.id}
                 title={
                   torneo.id === torneoId
@@ -194,32 +199,34 @@ useEffect(() => {
   );
 }
 
-const styles = StyleSheet.create({
-  contenedor: {
-    flex: 1,
-  },
-  contenido: {
-    padding: 20,
-    gap: 20,
-  },
-  torneos: {
-    gap: 10,
-  },
-  fila: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderBottomColor: '#999',
-    paddingVertical: 12,
-  },
-  celda: {
-    width: 55,
-    textAlign: 'center',
-  },
-  nombre: {
-    width: 160,
-    textAlign: 'left',
-  },
-  encabezado: {
-    fontWeight: 'bold',
-  },
-});
+const createStyles = (theme: ReturnType<typeof useTheme>) =>
+  StyleSheet.create({
+    contenedor: {
+      flex: 1,
+      backgroundColor: theme.background,
+    },
+    contenido: {
+      ...Visual.content,
+      backgroundColor: theme.background,
+    },
+    torneos: {
+      gap: 10,
+    },
+    fila: {
+      flexDirection: 'row',
+      borderBottomWidth: 1,
+      borderBottomColor: theme.border,
+      paddingVertical: 12,
+    },
+    celda: {
+      width: 55,
+      textAlign: 'center',
+    },
+    nombre: {
+      width: 160,
+      textAlign: 'left',
+    },
+    encabezado: {
+      fontWeight: 'bold',
+    },
+  });
