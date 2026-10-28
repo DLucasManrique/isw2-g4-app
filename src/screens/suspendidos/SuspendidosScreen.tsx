@@ -3,6 +3,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
 import { AppButton } from '@/components/app-button';
+import { router } from 'expo-router';
 import { JugadorSuspendido, suspendidosService } from '../../services/suspendidosService';
 
 export default function SuspendidosScreen() {
@@ -54,6 +55,7 @@ export default function SuspendidosScreen() {
               <Text style={styles.cardSub}>Equipo: {item.equipoNombre}</Text>
               <Text style={styles.motivo}>Motivo: {item.motivo}</Text>
               <Text style={styles.cardSub}>Partido: {item.partidoId}</Text>
+              <AppButton variant="secondary" title="Ver partido" onPress={() => router.push({ pathname: '/partidos/[id]/detalle', params: { id: item.partidoId } })} />
             </View>
           )}
         />

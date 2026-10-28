@@ -9,8 +9,10 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing, Visual } from '@/constants/theme';
 import { type Equipo, listarEquipos } from '@/services/equiposService';
+import { useSesion } from '@/contexts/SesionContext';
 
 export default function EquiposScreen() {
+  const { usuario } = useSesion();
   const theme = useTheme();
   const styles = createStyles(theme);
   const [equipos, setEquipos] = useState<Equipo[]>([]);
@@ -38,7 +40,7 @@ export default function EquiposScreen() {
   return (
     <ThemedView style={styles.pantalla}>
       <SafeAreaView edges={['bottom', 'left', 'right']} style={styles.contenido}>
-        <Button title="Nuevo equipo" onPress={() => router.push('/equipos/nuevo')} />
+        {usuario?.rol === 'ADMIN' && <Button title="Nuevo equipo" onPress={() => router.push('/equipos/nuevo')} />}
         {cargando ? (
           <ThemedView style={styles.mensaje}>
             <ActivityIndicator accessibilityLabel="Cargando equipos" />

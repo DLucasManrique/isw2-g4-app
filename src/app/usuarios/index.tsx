@@ -16,13 +16,16 @@ import {
 
 import {
     darDeBajaUsuario,
+    ErrorUsuarios,
     listarUsuarios,
 } from '../../services/usuariosService';
 import { Usuario } from '../../types/usuario';
+import { useSesion } from '@/contexts/SesionContext';
 
 export default function UsuariosScreen() {
   const theme = useTheme();
   const styles = createStyles(theme);
+  const { invalidarSesion } = useSesion();
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
@@ -36,13 +39,17 @@ export default function UsuariosScreen() {
       const datos = await listarUsuarios();
       setUsuarios(datos);
     } catch (e) {
+      if (e instanceof ErrorUsuarios && e.status === 401) {
+        await invalidarSesion();
+        return;
+      }
       setError(
         e instanceof Error ? e.message : 'No se pudieron cargar los usuarios'
       );
     } finally {
       setCargando(false);
     }
-  }, []);
+  }, [invalidarSesion]);
 
   useFocusEffect(
     useCallback(() => {
@@ -57,6 +64,10 @@ export default function UsuariosScreen() {
       await darDeBajaUsuario(id);
       await cargarUsuarios();
     } catch (e) {
+      if (e instanceof ErrorUsuarios && e.status === 401) {
+        await invalidarSesion();
+        return;
+      }
       setErrorOperacion(
         e instanceof Error ? e.message : 'No se pudo dar de baja al usuario'
       );
@@ -135,7 +146,7 @@ export default function UsuariosScreen() {
                 }
               />
 
-              {item.activo && (
+              {item.activo && item.rol !== 'ADMIN' && (
                 <Button variant="danger"
                   title="Dar de baja"
                   onPress={() => solicitarBaja(item)}

@@ -17,13 +17,17 @@ import {
 import { Equipo, listarEquipos } from '../../services/equipos';
 import { darDeBajaJugador, listarJugadores } from '../../services/jugadores';
 import { Jugador } from '../../types/jugador';
+import { useSesion } from '@/contexts/SesionContext';
 
 export default function JugadoresScreen() {
+  const { usuario } = useSesion();
+  const esAdmin = usuario?.rol === 'ADMIN';
   const theme = useTheme();
   const styles = createStyles(theme);
   const [jugadores, setJugadores] = useState<Jugador[]>([]);
   const [equipos, setEquipos] = useState<Equipo[]>([]);
   const [equipoId, setEquipoId] = useState<number | undefined>();
+  const equipoConsulta = esAdmin ? equipoId : usuario?.equipoId ?? undefined;
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
   const [errorOperacion, setErrorOperacion] = useState('');
@@ -67,8 +71,15 @@ export default function JugadoresScreen() {
       setCargando(true);
       setError('');
 
+      if (!esAdmin && (usuario?.rol !== 'DELEGADO' || equipoConsulta === undefined)) {
+        setJugadores([]);
+        setError('No se encontró el equipo del delegado.');
+        setCargando(false);
+        return;
+      }
+
       try {
-        const datos = await listarJugadores(equipoId);
+        const datos = await listarJugadores(equipoConsulta);
 
         if (activo) {
           setJugadores(datos);
@@ -93,9 +104,11 @@ export default function JugadoresScreen() {
     return () => {
       activo = false;
     };
-  }, [equipoId, recarga]);
+  }, [equipoConsulta, esAdmin, usuario?.rol, recarga]);
 
 async function eliminarJugador(id: number) {
+  const jugador = jugadores.find((item) => item.id === id);
+  if (!jugador || (!esAdmin && (usuario?.rol !== 'DELEGADO' || jugador.equipoId !== usuario.equipoId))) return;
   setErrorOperacion('');
   const confirmar = async () => {
     try {
@@ -144,9 +157,12 @@ async function eliminarJugador(id: number) {
 
 <Button
   title="Nuevo jugador"
+  disabled={!esAdmin && !usuario?.equipoId}
   onPress={() => router.push('/jugadores/nuevo')}
 />
 
+{esAdmin ? (
+  <>
 <Text style={styles.texto}>Filtrar por equipo</Text>
       <View>
         <ScrollView
@@ -178,6 +194,8 @@ async function eliminarJugador(id: number) {
           ))}
         </ScrollView>
       </View>
+  </>
+) : <Text style={styles.texto}>Equipo: {usuario?.equipoId ? nombreEquipo(usuario.equipoId) : 'Sin asignar'}</Text>}
 
       {errorEquipos !== '' && (
         <Text style={[styles.texto, styles.error]}>{errorEquipos}</Text>
@@ -213,6 +231,7 @@ async function eliminarJugador(id: number) {
               <Text style={styles.texto}>
                 Camiseta: {item.numeroCamiseta ?? 'Sin asignar'}
               </Text>
+            {(esAdmin || (usuario?.rol === 'DELEGADO' && item.equipoId === usuario.equipoId)) && <>
             <Button variant="secondary"
   title="Editar jugador"
   onPress={() =>
@@ -226,6 +245,7 @@ async function eliminarJugador(id: number) {
   title="Dar de baja"
   onPress={() => eliminarJugador(item.id)}
 />
+            </>}
             </View>
           )}
         />

@@ -9,8 +9,11 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Visual } from '@/constants/theme';
 import { darDeBajaEquipo, type Equipo, obtenerEquipo } from '@/services/equiposService';
+import { useSesion } from '@/contexts/SesionContext';
 
 export default function EquipoDetalleScreen() {
+  const { usuario } = useSesion();
+  const esAdmin = usuario?.rol === 'ADMIN';
   const theme = useTheme();
   const styles = createStyles(theme);
   const { id } = useLocalSearchParams<{ id: string | string[] }>();
@@ -48,7 +51,7 @@ export default function EquipoDetalleScreen() {
   );
 
   async function confirmarBaja() {
-    if (procesando || !equipo || !equipo.activo || !idValido) return;
+    if (!esAdmin || procesando || !equipo || !equipo.activo || !idValido) return;
     setProcesando(true);
     setError('');
     try {
@@ -77,15 +80,15 @@ export default function EquipoDetalleScreen() {
               <ThemedText>Torneo: {equipo.torneoId}</ThemedText>
               <ThemedText>Barrio: {equipo.barrio || 'Sin especificar'}</ThemedText>
               <ThemedText type="smallBold">Estado: {equipo.activo ? 'Activo' : 'Inactivo'}</ThemedText>
-              <Button variant="secondary"
+              {esAdmin && <Button variant="secondary"
                 title="Editar equipo"
                 disabled={procesando}
                 onPress={() => router.push({ pathname: '/equipos/[id]/editar', params: { id: equipo.id } })}
-              />
-              {equipo.activo && !confirmando && (
+              />}
+              {esAdmin && equipo.activo && !confirmando && (
                 <Button variant="danger" title="Dar de baja" onPress={() => setConfirmando(true)} />
               )}
-              {confirmando && (
+              {esAdmin && confirmando && (
                 <ThemedView type="backgroundElement" style={styles.confirmacion}>
                   <ThemedText>¿Dar de baja a “{equipo.nombre}”? El equipo quedará inactivo.</ThemedText>
                   <Button variant="secondary" title="Cancelar" disabled={procesando} onPress={() => setConfirmando(false)} />

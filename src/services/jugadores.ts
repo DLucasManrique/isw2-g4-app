@@ -13,6 +13,8 @@ async function verificarRespuesta(respuesta: Response) {
 
   if (error?.errores) {
     mensaje = Object.values(error.errores).join('\n');
+  } else if (error?.detail) {
+    mensaje = error.detail;
   } else if (error?.mensaje) {
     mensaje = error.mensaje;
   } else if (error?.message) {
@@ -51,6 +53,7 @@ export async function crearJugador(
 ): Promise<Jugador> {
   const respuesta = await fetch(`${API_URL}/api/jugadores`, {
     method: 'POST',
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
     },
@@ -68,6 +71,7 @@ export async function modificarJugador(
 ): Promise<Jugador> {
   const respuesta = await fetch(`${API_URL}/api/jugadores/${id}`, {
     method: 'PUT',
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
     },
@@ -82,6 +86,7 @@ export async function modificarJugador(
 export async function darDeBajaJugador(id: number): Promise<void> {
   const respuesta = await fetch(`${API_URL}/api/jugadores/${id}`, {
     method: 'DELETE',
+    credentials: 'include',
   });
 
   await verificarRespuesta(respuesta);

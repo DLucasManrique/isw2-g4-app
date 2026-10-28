@@ -57,6 +57,7 @@ export async function obtenerEquipo(id: number): Promise<Equipo> {
 export async function crearEquipo(datos: EquipoRequest): Promise<Equipo> {
   const respuesta = await solicitarEquipos('', {
     method: 'POST',
+    credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(datos),
   });
@@ -66,6 +67,7 @@ export async function crearEquipo(datos: EquipoRequest): Promise<Equipo> {
 export async function actualizarEquipo(id: number, datos: EquipoRequest): Promise<Equipo> {
   const respuesta = await solicitarEquipos(`/${id}`, {
     method: 'PUT',
+    credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(datos),
   });
@@ -73,5 +75,5 @@ export async function actualizarEquipo(id: number, datos: EquipoRequest): Promis
 }
 
 export async function darDeBajaEquipo(id: number): Promise<void> {
-  await solicitarEquipos(`/${id}`, { method: 'DELETE' });
+  await solicitarEquipos(`/${id}`, { method: 'DELETE', credentials: 'include' });
 }

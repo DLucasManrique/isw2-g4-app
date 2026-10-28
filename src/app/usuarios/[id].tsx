@@ -15,12 +15,17 @@ import {
 
 import {
   editarUsuario,
+  ErrorUsuarios,
   obtenerUsuario,
 } from '../../services/usuariosService';
+import { listarEquipos, type Equipo } from '@/services/equiposService';
+import { useSesion } from '@/contexts/SesionContext';
+import { REGLAS_PASSWORD, validarPassword } from '@/utils/validarPassword';
 
 export default function EditarUsuarioScreen() {
   const theme = useTheme();
   const styles = createStyles(theme);
+  const { invalidarSesion } = useSesion();
   const { id } = useLocalSearchParams<{ id: string }>();
 
   const [username, setUsername] = useState('');
@@ -28,6 +33,12 @@ export default function EditarUsuarioScreen() {
   const [rol, setRol] = useState('');
   const [activo, setActivo] = useState(true);
   const [password, setPassword] = useState('');
+  const [mostrarPassword, setMostrarPassword] = useState(false);
+  const [equipoId, setEquipoId] = useState<number | null>(null);
+  const [equipos, setEquipos] = useState<Equipo[]>([]);
+  const [cargandoEquipos, setCargandoEquipos] = useState(false);
+  const [errorEquipos, setErrorEquipos] = useState('');
+  const [intentoEquipos, setIntentoEquipos] = useState(0);
   const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState('');
@@ -41,9 +52,14 @@ export default function EditarUsuarioScreen() {
         setUsername(usuario.username);
         setNombreCompleto(usuario.nombreCompleto);
         setRol(usuario.rol);
+        setEquipoId(usuario.equipoId);
         setActivo(usuario.activo);
         setCargado(true);
       } catch (e) {
+        if (e instanceof ErrorUsuarios && e.status === 401) {
+          await invalidarSesion();
+          return;
+        }
         setError(
           e instanceof Error ? e.message : 'No se pudo cargar el usuario'
         );
@@ -53,9 +69,29 @@ export default function EditarUsuarioScreen() {
     }
 
     void cargarUsuario();
-  }, [id]);
+  }, [id, invalidarSesion]);
+
+  useEffect(() => {
+    if (rol !== 'DELEGADO') return;
+    let vigente = true;
+    setCargandoEquipos(true);
+    setErrorEquipos('');
+    async function cargarEquipos() {
+      try {
+        const datos = await listarEquipos();
+        if (vigente) setEquipos(datos);
+      } catch (error) {
+        if (vigente) setErrorEquipos(error instanceof Error ? error.message : 'No se pudieron cargar los equipos.');
+      } finally {
+        if (vigente) setCargandoEquipos(false);
+      }
+    }
+    void cargarEquipos();
+    return () => { vigente = false; };
+  }, [rol, intentoEquipos]);
 
   async function guardar() {
+    if (guardando) return;
     setError('');
 
     if (!username.trim() || !nombreCompleto.trim()) {
@@ -68,6 +104,18 @@ export default function EditarUsuarioScreen() {
       return;
     }
 
+    if (password !== '') {
+      const errorPassword = validarPassword(password);
+      if (errorPassword) {
+        setError(errorPassword);
+        return;
+      }
+    }
+    if (rol === 'DELEGADO' && (cargandoEquipos || errorEquipos || !equipos.some((equipo) => equipo.id === equipoId))) {
+      setError('Seleccioná un equipo existente para el delegado.');
+      return;
+    }
+
     setGuardando(true);
 
     try {
@@ -76,11 +124,16 @@ export default function EditarUsuarioScreen() {
         nombreCompleto: nombreCompleto.trim(),
         password,
         rol,
+        equipoId: rol === 'ADMIN' ? null : equipoId,
         activo,
       });
 
       router.replace('/usuarios');
     } catch (e) {
+      if (e instanceof ErrorUsuarios && e.status === 401) {
+        await invalidarSesion();
+        return;
+      }
       setError(
         e instanceof Error ? e.message : 'No se pudo editar el usuario'
       );
@@ -131,21 +184,32 @@ export default function EditarUsuarioScreen() {
         style={styles.input}
         value={password}
         onChangeText={setPassword}
-        secureTextEntry
+        secureTextEntry={!mostrarPassword}
+        autoCapitalize="none"
+        autoCorrect={false}
         placeholder="Dejar vacío para no cambiar"
       />
 
-      <Text style={styles.texto}>Rol *</Text>
-      <View style={styles.roles}>
-        <Button selected={rol === 'ADMIN'}
-          title={rol === 'ADMIN' ? '✓ ADMIN' : 'ADMIN'}
-          onPress={() => setRol('ADMIN')}
-        />
-        <Button selected={rol === 'DELEGADO'}
-          title={rol === 'DELEGADO' ? '✓ DELEGADO' : 'DELEGADO'}
-          onPress={() => setRol('DELEGADO')}
-        />
-      </View>
+      <Text style={styles.texto}>{REGLAS_PASSWORD} Dejá el campo vacío para conservar la actual.</Text>
+      <Button variant="secondary" title={mostrarPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'} onPress={() => setMostrarPassword(!mostrarPassword)} />
+
+      <Text style={styles.texto}>Rol: {rol}</Text>
+
+      {rol === 'DELEGADO' && (
+        <View style={styles.roles}>
+          <Text style={styles.texto}>Equipo *</Text>
+          {cargandoEquipos ? <ActivityIndicator /> : errorEquipos ? (
+            <>
+              <Text style={styles.error} accessibilityRole="alert">{errorEquipos}</Text>
+              <Button variant="secondary" title="Reintentar equipos" onPress={() => setIntentoEquipos((valor) => valor + 1)} />
+            </>
+          ) : equipos.length === 0 ? (
+            <Text style={styles.texto}>Primero debe crearse un equipo para registrar un delegado.</Text>
+          ) : equipos.map((equipo) => (
+            <Button key={equipo.id} title={equipo.nombre} selected={equipo.id === equipoId} disabled={guardando} onPress={() => setEquipoId(equipo.id)} />
+          ))}
+        </View>
+      )}
 
       <Text style={styles.texto}>Estado: {activo ? 'Activo' : 'Inactivo'}</Text>
 
@@ -154,7 +218,7 @@ export default function EditarUsuarioScreen() {
       <Button
         title={guardando ? 'Guardando...' : 'Guardar cambios'}
         onPress={guardar}
-        disabled={guardando}
+        disabled={guardando || (rol === 'DELEGADO' && (cargandoEquipos || !!errorEquipos || equipos.length === 0))}
       />
 
       <Button variant="secondary"

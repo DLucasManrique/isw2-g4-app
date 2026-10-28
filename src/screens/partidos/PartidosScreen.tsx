@@ -10,8 +10,10 @@ import { ThemedView } from '@/components/themed-view';
 import { Spacing, Visual } from '@/constants/theme';
 import { type Equipo, listarEquipos } from '@/services/equiposService';
 import { type Partido, listarPartidos } from '@/services/partidosService';
+import { useSesion } from '@/contexts/SesionContext';
 
 export default function PartidosScreen() {
+  const { usuario } = useSesion();
   const theme = useTheme();
   const styles = createStyles(theme);
   const [partidos, setPartidos] = useState<Partido[]>([]);
@@ -59,7 +61,7 @@ export default function PartidosScreen() {
   return (
     <ThemedView style={styles.pantalla}>
       <SafeAreaView edges={['bottom', 'left', 'right']} style={styles.contenido}>
-        <Button title="Programar partido" onPress={() => router.push('/partidos/nuevo')} />
+        {usuario?.rol === 'ADMIN' && <Button title="Programar partido" onPress={() => router.push('/partidos/nuevo')} />}
         {cargando ? (
           <ThemedView style={styles.mensaje}>
             <ActivityIndicator accessibilityLabel="Cargando partidos" />

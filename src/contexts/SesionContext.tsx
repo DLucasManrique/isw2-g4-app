@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 
-import { esUsuarioSesion, type UsuarioSesion } from '@/services/authService';
+import { cerrarSesionRemota, esUsuarioSesion, type UsuarioSesion } from '@/services/authService';
 
 const CLAVE_SESION = 'liga.sesion';
 
@@ -11,6 +11,7 @@ const SesionContext = createContext<{
   error: string;
   guardarSesion: (usuario: UsuarioSesion) => Promise<void>;
   cerrarSesion: () => Promise<void>;
+  invalidarSesion: () => Promise<void>;
 } | null>(null);
 
 export function SesionProvider({ children }: { children: ReactNode }) {
@@ -25,7 +26,7 @@ export function SesionProvider({ children }: { children: ReactNode }) {
         if (guardado) {
           const datos: unknown = JSON.parse(guardado);
           if (esUsuarioSesion(datos)) {
-            setUsuario({ id: datos.id, username: datos.username, nombreCompleto: datos.nombreCompleto, rol: datos.rol });
+            setUsuario({ id: datos.id, username: datos.username, nombreCompleto: datos.nombreCompleto, rol: datos.rol, equipoId: datos.equipoId });
           } else {
             await AsyncStorage.removeItem(CLAVE_SESION);
           }
@@ -40,7 +41,7 @@ export function SesionProvider({ children }: { children: ReactNode }) {
   }, []);
 
   async function guardarSesion(datos: UsuarioSesion) {
-    const sesion = { id: datos.id, username: datos.username, nombreCompleto: datos.nombreCompleto, rol: datos.rol };
+    const sesion = { id: datos.id, username: datos.username, nombreCompleto: datos.nombreCompleto, rol: datos.rol, equipoId: datos.equipoId };
     try {
       await AsyncStorage.setItem(CLAVE_SESION, JSON.stringify(sesion));
     } catch {
@@ -50,17 +51,29 @@ export function SesionProvider({ children }: { children: ReactNode }) {
     setUsuario(sesion);
   }
 
-  async function cerrarSesion() {
+  const limpiarSesionLocal = useCallback(async () => {
     try {
       await AsyncStorage.removeItem(CLAVE_SESION);
     } catch {
-      throw new Error('No se pudo cerrar la sesión. Intenta nuevamente.');
+      setError('No se pudo eliminar la sesión guardada del dispositivo.');
+    } finally {
+      setUsuario(null);
     }
-    setUsuario(null);
+  }, []);
+
+  const invalidarSesion = useCallback(async () => {
+    await limpiarSesionLocal();
+    setError('La sesión venció. Iniciá sesión nuevamente.');
+  }, [limpiarSesionLocal]);
+
+  async function cerrarSesion() {
+    setError('');
+    await cerrarSesionRemota().catch(() => undefined);
+    await limpiarSesionLocal();
   }
 
   return (
-    <SesionContext.Provider value={{ usuario, cargando, error, guardarSesion, cerrarSesion }}>
+    <SesionContext.Provider value={{ usuario, cargando, error, guardarSesion, cerrarSesion, invalidarSesion }}>
       {children}
     </SesionContext.Provider>
   );

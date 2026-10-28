@@ -5,6 +5,7 @@ export type UsuarioSesion = {
   username: string;
   nombreCompleto: string;
   rol: string;
+  equipoId: number | null;
 };
 
 export function esUsuarioSesion(datos: unknown): datos is UsuarioSesion {
@@ -12,7 +13,9 @@ export function esUsuarioSesion(datos: unknown): datos is UsuarioSesion {
     'id' in datos && typeof datos.id === 'number' && Number.isInteger(datos.id) && datos.id > 0 &&
     'username' in datos && typeof datos.username === 'string' &&
     'nombreCompleto' in datos && typeof datos.nombreCompleto === 'string' &&
-    'rol' in datos && typeof datos.rol === 'string';
+    'rol' in datos && 'equipoId' in datos &&
+    ((datos.rol === 'ADMIN' && datos.equipoId === null) ||
+      (datos.rol === 'DELEGADO' && typeof datos.equipoId === 'number' && Number.isInteger(datos.equipoId) && datos.equipoId > 0));
 }
 
 export async function iniciarSesion(username: string, password: string): Promise<UsuarioSesion> {
@@ -24,6 +27,7 @@ export async function iniciarSesion(username: string, password: string): Promise
   try {
     respuesta = await fetch(`${API_URL}/api/auth/login`, {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password }),
     });
@@ -51,5 +55,13 @@ export async function iniciarSesion(username: string, password: string): Promise
 
   const datos: unknown = await respuesta.json().catch(() => null);
   if (!esUsuarioSesion(datos)) throw new Error('El backend devolvió una sesión inválida.');
-  return { id: datos.id, username: datos.username, nombreCompleto: datos.nombreCompleto, rol: datos.rol };
+  return { id: datos.id, username: datos.username, nombreCompleto: datos.nombreCompleto, rol: datos.rol, equipoId: datos.equipoId };
+}
+
+export async function cerrarSesionRemota(): Promise<void> {
+  const respuesta = await fetch(`${API_URL}/api/auth/logout`, {
+    method: 'POST',
+    credentials: 'include',
+  });
+  if (!respuesta.ok) throw new Error('No se pudo cerrar la sesión del servidor.');
 }

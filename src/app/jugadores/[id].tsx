@@ -16,13 +16,19 @@ import {
   modificarJugador,
   obtenerJugador,
 } from '../../services/jugadores';
+import { useSesion } from '@/contexts/SesionContext';
+import { obtenerEquipo } from '@/services/equiposService';
 
 export default function EditarJugadorScreen() {
+  const { usuario } = useSesion();
+  const esAdmin = usuario?.rol === 'ADMIN';
   const theme = useTheme();
   const styles = createStyles(theme);
   const { id } = useLocalSearchParams<{ id: string }>();
 
   const [equipoId, setEquipoId] = useState<number | null>(null);
+  const [equipoNombre, setEquipoNombre] = useState('');
+  const puedeGestionar = esAdmin || (usuario?.rol === 'DELEGADO' && equipoId !== null && equipoId === usuario.equipoId);
   const [nombre, setNombre] = useState('');
   const [apellido, setApellido] = useState('');
   const [dni, setDni] = useState('');
@@ -33,32 +39,43 @@ export default function EditarJugadorScreen() {
   const [mensaje, setMensaje] = useState('');
 
   useEffect(() => {
+    let vigente = true;
+    setCargando(true);
+    setEquipoId(null);
+    setEquipoNombre('');
+    setError('');
     async function cargarJugador() {
       try {
         const jugador = await obtenerJugador(Number(id));
+        if (!vigente) return;
 
         setEquipoId(jugador.equipoId);
+        if (!esAdmin && (usuario?.rol !== 'DELEGADO' || jugador.equipoId !== usuario.equipoId)) return;
         setNombre(jugador.nombre);
         setApellido(jugador.apellido);
         setDni(jugador.dni);
         setCamiseta(
           jugador.numeroCamiseta?.toString() ?? ''
         );
+        const equipo = await obtenerEquipo(jugador.equipoId).catch(() => null);
+        if (vigente) setEquipoNombre(equipo?.nombre ?? `Equipo ${jugador.equipoId}`);
       } catch (e) {
-        setError(
+        if (vigente) setError(
           e instanceof Error
             ? e.message
             : 'No se pudo cargar el jugador'
         );
       } finally {
-        setCargando(false);
+        if (vigente) setCargando(false);
       }
     }
 
     cargarJugador();
-  }, [id]);
+    return () => { vigente = false; };
+  }, [id, esAdmin, usuario?.rol, usuario?.equipoId]);
 
   async function guardar() {
+    if (!puedeGestionar || cargando || guardando) return;
     setError('');
     setMensaje('');
 
@@ -121,6 +138,14 @@ export default function EditarJugadorScreen() {
   if (cargando) {
     return <ActivityIndicator size="large" />;
   }
+  if (equipoId !== null && !puedeGestionar) {
+    return (
+      <ScrollView contentContainerStyle={styles.contenedor}>
+        <Text style={styles.error} accessibilityRole="alert">Solo podés gestionar jugadores de tu equipo.</Text>
+        <Button variant="secondary" title="Volver" onPress={() => router.replace('/jugadores')} />
+      </ScrollView>
+    );
+  }
 if (equipoId === null) {
   return (
     <ScrollView contentContainerStyle={styles.contenedor}>
@@ -170,7 +195,7 @@ if (equipoId === null) {
       <TextInput
         placeholderTextColor={theme.textSecondary}
         style={styles.input}
-        value={equipoId?.toString() ?? ''}
+        value={equipoNombre || `Equipo ${equipoId}`}
         editable={false}
       />
 

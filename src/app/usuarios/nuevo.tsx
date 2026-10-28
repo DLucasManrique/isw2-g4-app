@@ -3,7 +3,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { AppButton as Button } from '@/components/app-button';
 
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
     ScrollView,
@@ -13,17 +13,44 @@ import {
     View,
 } from 'react-native';
 
-import { crearUsuario } from '../../services/usuariosService';
+import { crearUsuario, ErrorUsuarios } from '../../services/usuariosService';
+import { listarEquipos, type Equipo } from '@/services/equiposService';
+import { useSesion } from '@/contexts/SesionContext';
+import { REGLAS_PASSWORD, validarPassword } from '@/utils/validarPassword';
 
 export default function NuevoUsuarioScreen() {
   const theme = useTheme();
   const styles = createStyles(theme);
+  const { invalidarSesion } = useSesion();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [mostrarPassword, setMostrarPassword] = useState(false);
   const [nombreCompleto, setNombreCompleto] = useState('');
-  const [rol, setRol] = useState('DELEGADO');
+  const [equipoId, setEquipoId] = useState<number | null>(null);
+  const [equipos, setEquipos] = useState<Equipo[]>([]);
+  const [cargandoEquipos, setCargandoEquipos] = useState(false);
+  const [errorEquipos, setErrorEquipos] = useState('');
+  const [intentoEquipos, setIntentoEquipos] = useState(0);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    let vigente = true;
+    setCargandoEquipos(true);
+    setErrorEquipos('');
+    async function cargarEquipos() {
+      try {
+        const datos = await listarEquipos();
+        if (vigente) setEquipos(datos);
+      } catch (error) {
+        if (vigente) setErrorEquipos(error instanceof Error ? error.message : 'No se pudieron cargar los equipos.');
+      } finally {
+        if (vigente) setCargandoEquipos(false);
+      }
+    }
+    void cargarEquipos();
+    return () => { vigente = false; };
+  }, [intentoEquipos]);
 
   async function guardar() {
     setError('');
@@ -37,6 +64,16 @@ export default function NuevoUsuarioScreen() {
       return;
     }
 
+    const errorPassword = validarPassword(password);
+    if (errorPassword) {
+      setError(errorPassword);
+      return;
+    }
+    if (cargandoEquipos || errorEquipos || !equipos.some((equipo) => equipo.id === equipoId)) {
+      setError('Seleccioná un equipo existente para el delegado.');
+      return;
+    }
+
     setGuardando(true);
 
     try {
@@ -44,12 +81,17 @@ export default function NuevoUsuarioScreen() {
         username: username.trim(),
         password,
         nombreCompleto: nombreCompleto.trim(),
-        rol,
+        rol: 'DELEGADO',
+        equipoId,
         activo: true,
       });
 
       router.replace('/usuarios');
     } catch (e) {
+      if (e instanceof ErrorUsuarios && e.status === 401) {
+        await invalidarSesion();
+        return;
+      }
       setError(
         e instanceof Error ? e.message : 'No se pudo crear el usuario'
       );
@@ -87,20 +129,29 @@ export default function NuevoUsuarioScreen() {
         style={styles.input}
         value={password}
         onChangeText={setPassword}
-        secureTextEntry
+        secureTextEntry={!mostrarPassword}
+        autoCapitalize="none"
+        autoCorrect={false}
         placeholder="Ingresar contraseña"
       />
 
-      <Text style={styles.texto}>Rol *</Text>
+      <Text style={styles.texto}>{REGLAS_PASSWORD}</Text>
+      <Button variant="secondary" title={mostrarPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'} onPress={() => setMostrarPassword(!mostrarPassword)} />
+
+      <Text style={styles.texto}>Rol: DELEGADO</Text>
+
       <View style={styles.roles}>
-        <Button selected={rol === 'ADMIN'}
-          title={rol === 'ADMIN' ? '✓ ADMIN' : 'ADMIN'}
-          onPress={() => setRol('ADMIN')}
-        />
-        <Button selected={rol === 'DELEGADO'}
-          title={rol === 'DELEGADO' ? '✓ DELEGADO' : 'DELEGADO'}
-          onPress={() => setRol('DELEGADO')}
-        />
+          <Text style={styles.texto}>Equipo *</Text>
+          {cargandoEquipos ? <ActivityIndicator /> : errorEquipos ? (
+            <>
+              <Text style={styles.error} accessibilityRole="alert">{errorEquipos}</Text>
+              <Button variant="secondary" title="Reintentar equipos" onPress={() => setIntentoEquipos((valor) => valor + 1)} />
+            </>
+          ) : equipos.length === 0 ? (
+            <Text style={styles.texto}>Primero debe crearse un equipo para registrar un delegado.</Text>
+          ) : equipos.map((equipo) => (
+            <Button key={equipo.id} title={equipo.nombre} selected={equipo.id === equipoId} disabled={guardando} onPress={() => setEquipoId(equipo.id)} />
+          ))}
       </View>
 
       {error !== '' && <Text style={[styles.texto, styles.error]}>{error}</Text>}
@@ -108,7 +159,7 @@ export default function NuevoUsuarioScreen() {
       {guardando ? (
         <ActivityIndicator size="large" />
       ) : (
-        <Button title="Guardar usuario" onPress={guardar} />
+        <Button title="Guardar usuario" onPress={guardar} disabled={cargandoEquipos || !!errorEquipos || equipos.length === 0} />
       )}
 
       <Button variant="secondary"

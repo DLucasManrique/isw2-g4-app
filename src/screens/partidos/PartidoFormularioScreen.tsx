@@ -1,5 +1,5 @@
 import { AppButton as Button } from '@/components/app-button';
-import { router } from 'expo-router';
+import { Redirect, router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -8,18 +8,19 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing, Visual } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { getArbitros, getCanchas, getTorneos, type Arbitro, type Cancha, type Torneo } from '@/services/catalogoService';
+import { getArbitros, getCanchas, getTorneos, type Arbitro, type Cancha } from '@/services/catalogoService';
 import { listarEquipos, type Equipo } from '@/services/equiposService';
 import { crearPartido } from '@/services/partidosService';
+import { useSesion } from '@/contexts/SesionContext';
 
 export default function PartidoFormularioScreen() {
+  const { usuario } = useSesion();
+  const esAdmin = usuario?.rol === 'ADMIN';
   const theme = useTheme();
   const styles = createStyles(theme);
-  const [torneos, setTorneos] = useState<Torneo[]>([]);
   const [equipos, setEquipos] = useState<Equipo[]>([]);
   const [canchas, setCanchas] = useState<Cancha[]>([]);
   const [arbitros, setArbitros] = useState<Arbitro[]>([]);
-  const [torneoId, setTorneoId] = useState<number | null>(null);
   const [equipoLocalId, setEquipoLocalId] = useState<number | null>(null);
   const [equipoVisitanteId, setEquipoVisitanteId] = useState<number | null>(null);
   const [canchaId, setCanchaId] = useState<number | null>(null);
@@ -34,6 +35,7 @@ export default function PartidoFormularioScreen() {
   const [intento, setIntento] = useState(0);
 
   useEffect(() => {
+    if (!esAdmin) return;
     let vigente = true;
     setCargando(true);
     setErrorCarga('');
@@ -43,8 +45,9 @@ export default function PartidoFormularioScreen() {
           getTorneos(), listarEquipos(), getCanchas(), getArbitros(),
         ]);
         if (!vigente) return;
-        setTorneos(listaTorneos.filter((item) => item.activo));
-        setEquipos(listaEquipos.filter((item) => item.activo));
+        const torneos2026 = listaTorneos.filter((item) => item.anio === 2026);
+        if (torneos2026.length !== 1) throw new Error('Debe existir exactamente un torneo correspondiente a 2026.');
+        setEquipos(listaEquipos.filter((item) => item.activo && item.torneoId === torneos2026[0].id));
         setCanchas(listaCanchas.filter((item) => item.activo));
         setArbitros(listaArbitros.filter((item) => item.activo));
       } catch (error) {
@@ -55,13 +58,13 @@ export default function PartidoFormularioScreen() {
     }
     void cargar();
     return () => { vigente = false; };
-  }, [intento]);
+  }, [esAdmin, intento]);
 
   async function guardar() {
-    if (guardando || cargando || errorCarga) return;
+    if (!esAdmin || guardando || cargando || errorCarga) return;
     setError('');
-    if (torneoId === null || equipoLocalId === null || equipoVisitanteId === null || canchaId === null || arbitroId === null) {
-      setError('Seleccioná torneo, ambos equipos, cancha y árbitro.');
+    if (equipoLocalId === null || equipoVisitanteId === null || canchaId === null || arbitroId === null) {
+      setError('Seleccioná ambos equipos, cancha y árbitro.');
       return;
     }
     if (equipoLocalId === equipoVisitanteId) {
@@ -86,7 +89,7 @@ export default function PartidoFormularioScreen() {
     setGuardando(true);
     try {
       await crearPartido({
-        torneoId, numeroFecha: numero, equipoLocalId, equipoVisitanteId,
+        numeroFecha: numero, equipoLocalId, equipoVisitanteId,
         canchaId, arbitroId, fechaHoraInicio: `${fechaTexto}T${horaTexto}:00`,
       });
       router.dismissTo('/partidos');
@@ -109,8 +112,9 @@ export default function PartidoFormularioScreen() {
     );
   }
 
-  const equiposTorneo = equipos.filter((item) => item.torneoId === torneoId);
   const estiloCampo = [styles.campo, { color: theme.text, borderColor: theme.border }];
+
+  if (!esAdmin) return <Redirect href="/partidos" />;
 
   return (
     <ThemedView style={styles.pantalla}>
@@ -123,17 +127,9 @@ export default function PartidoFormularioScreen() {
             </>
           ) : (
             <>
-              {selector('Torneo', torneos, torneoId, (id) => {
-                setTorneoId(id);
-                setEquipoLocalId(null);
-                setEquipoVisitanteId(null);
-              })}
-              {torneoId !== null && (
-                <>
-                  {selector('Equipo local', equiposTorneo, equipoLocalId, setEquipoLocalId)}
-                  {selector('Equipo visitante', equiposTorneo.filter((item) => item.id !== equipoLocalId), equipoVisitanteId, setEquipoVisitanteId)}
-                </>
-              )}
+              <ThemedText type="small" themeColor="textSecondary">Torneo 2026</ThemedText>
+              {selector('Equipo local', equipos, equipoLocalId, setEquipoLocalId)}
+              {selector('Equipo visitante', equipos.filter((item) => item.id !== equipoLocalId), equipoVisitanteId, setEquipoVisitanteId)}
               {selector('Cancha', canchas, canchaId, setCanchaId)}
               {selector('Árbitro', arbitros.map((item) => ({ id: item.id, nombre: `${item.nombre} ${item.apellido}` })), arbitroId, setArbitroId)}
               <ThemedText>Número de fecha</ThemedText>
