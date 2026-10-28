@@ -17,12 +17,13 @@ export type Partido = {
 };
 
 export type PartidoRequest = Pick<Partido,
-  'torneoId' | 'numeroFecha' | 'equipoLocalId' | 'equipoVisitanteId' |
+  'numeroFecha' | 'equipoLocalId' | 'equipoVisitanteId' |
   'canchaId' | 'arbitroId' | 'fechaHoraInicio'>;
 
 export async function crearPartido(datos: PartidoRequest): Promise<Omit<Partido, 'golesLocal' | 'golesVisitante'>> {
   const respuesta = await solicitarPartido('', {
     method: 'POST',
+    credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(datos),
   });
@@ -68,6 +69,7 @@ export async function obtenerPartido(id: number): Promise<Partido | null> {
 export async function cambiarEstadoPartido(id: number, estado: EstadoPartido): Promise<Omit<Partido, 'golesLocal' | 'golesVisitante'>> {
   const respuesta = await solicitarPartido(`/${id}/estado`, {
     method: 'PATCH',
+    credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ estado }),
   });

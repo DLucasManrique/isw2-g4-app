@@ -4,6 +4,7 @@ export type Usuario = {
   nombreCompleto: string;
   rol: string;
   activo: boolean;
+  equipoId: number | null;
 };
 
 export type UsuarioRequest = {
@@ -12,4 +13,5 @@ export type UsuarioRequest = {
   nombreCompleto: string;
   rol: string;
   activo: boolean;
+  equipoId: number | null;
 };

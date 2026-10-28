@@ -15,8 +15,11 @@ import {
 
 import { Equipo, listarEquipos } from '../../services/equipos';
 import { crearJugador } from '../../services/jugadores';
+import { useSesion } from '@/contexts/SesionContext';
 
 export default function NuevoJugadorScreen() {
+  const { usuario } = useSesion();
+  const esAdmin = usuario?.rol === 'ADMIN';
   const theme = useTheme();
   const styles = createStyles(theme);
   const [nombre, setNombre] = useState('');
@@ -25,6 +28,7 @@ export default function NuevoJugadorScreen() {
   const [camiseta, setCamiseta] = useState('');
   const [equipos, setEquipos] = useState<Equipo[]>([]);
   const [equipoId, setEquipoId] = useState<number | null>(null);
+  const equipoAltaId = esAdmin ? equipoId : usuario?.rol === 'DELEGADO' ? usuario.equipoId : null;
   const [cargando, setCargando] = useState(false);
   const [cargandoEquipos, setCargandoEquipos] = useState(true);
   const [error, setError] = useState('');
@@ -62,7 +66,7 @@ export default function NuevoJugadorScreen() {
       return;
     }
 
-    if (equipoId === null) {
+    if (equipoAltaId === null) {
       setError('Seleccioná un equipo');
       return;
     }
@@ -84,7 +88,7 @@ export default function NuevoJugadorScreen() {
         nombre: nombre.trim(),
         apellido: apellido.trim(),
         dni: dni.trim(),
-        equipoId,
+        equipoId: equipoAltaId,
         numeroCamiseta: numero,
       });
 
@@ -142,6 +146,8 @@ export default function NuevoJugadorScreen() {
 
       {cargandoEquipos ? (
         <ActivityIndicator />
+      ) : !esAdmin ? (
+        <Text style={styles.texto}>{equipos.find((equipo) => equipo.id === equipoAltaId)?.nombre ?? 'No se encontró el equipo del delegado.'}</Text>
       ) : equipos.length === 0 ? (
         <Text style={[styles.texto, Visual.message, { backgroundColor: theme.backgroundElement }]}>No hay equipos disponibles.</Text>
       ) : (
@@ -173,7 +179,7 @@ export default function NuevoJugadorScreen() {
       <Button
         title={cargando ? 'Guardando...' : 'Guardar jugador'}
         onPress={guardar}
-        disabled={cargando || cargandoEquipos || equipos.length === 0}
+        disabled={cargando || cargandoEquipos || (esAdmin ? equipos.length === 0 : equipoAltaId === null)}
       />
 
       <Button variant="secondary"

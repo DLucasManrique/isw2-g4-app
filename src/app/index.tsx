@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, TextInput, View, useWindowDimensions } from 'react-native';
+import { ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppButton } from '@/components/app-button';
@@ -18,8 +18,6 @@ export default function HomeScreen() {
   const [error, setError] = useState('');
   const theme = useTheme();
   const { width } = useWindowDimensions();
-  const [partidoId, setPartidoId] = useState('');
-  const [errorPartido, setErrorPartido] = useState('');
 
   async function salir() {
     if (cerrando) return;
@@ -32,16 +30,6 @@ export default function HomeScreen() {
     } finally {
       setCerrando(false);
     }
-  }
-
-  function abrirPartido() {
-    const id = Number(partidoId.trim());
-    if (!/^\d+$/.test(partidoId.trim()) || !Number.isSafeInteger(id) || id <= 0 || id > 2147483647) {
-      setErrorPartido('Ingresa un ID de partido entero positivo válido.');
-      return;
-    }
-    setErrorPartido('');
-    router.push({ pathname: '/partidos/[id]', params: { id } });
   }
 
   return (
@@ -62,7 +50,7 @@ export default function HomeScreen() {
           <ThemedText type="subtitle">Explorá la liga</ThemedText>
           <View style={styles.grid}>
             {[
-              { title: 'Equipos', description: 'Gestión de equipos de la liga', route: '/equipos' as const },
+              ...(esAdmin ? [{ title: 'Equipos', description: 'Gestión de equipos de la liga', route: '/equipos' as const }] : []),
               { title: 'Jugadores', description: 'Planteles y datos de jugadores', route: '/jugadores' as const },
               { title: 'Catálogo', description: 'Torneos, canchas y árbitros', route: '/catalogo' as const },
               { title: 'Partidos', description: 'Programación, resultados y seguimiento', route: '/partidos' as const },
@@ -77,14 +65,6 @@ export default function HomeScreen() {
               </AppCard>
             ))}
           </View>
-          <AppCard>
-            <ThemedText type="smallBold">Acceso directo por ID</ThemedText>
-            <ThemedText type="small" themeColor="textSecondary">Si conocés el ID, podés abrir directamente el partido en vivo.</ThemedText>
-            <ThemedText type="small">ID del partido</ThemedText>
-            <TextInput accessibilityLabel="ID del partido" value={partidoId} onChangeText={setPartidoId} keyboardType="number-pad" placeholder="ID del partido" placeholderTextColor={theme.textSecondary} style={[Visual.input, { color: theme.text, borderColor: theme.border, backgroundColor: theme.background }]} onSubmitEditing={abrirPartido} />
-            {!!errorPartido && <ThemedText accessibilityRole="alert">{errorPartido}</ThemedText>}
-            <AppButton variant="secondary" title="Abrir partido" onPress={abrirPartido} />
-          </AppCard>
         </SafeAreaView>
       </ScrollView>
     </ThemedView>

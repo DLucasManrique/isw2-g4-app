@@ -12,8 +12,10 @@ import { obtenerEquipo, type Equipo } from '@/services/equiposService';
 import { corregirEvento, eliminarEvento, listarEventos, registrarEvento, type EventoPartido, type TipoEvento } from '@/services/eventosPartidoService';
 import { listarJugadoresPorEquipo, type Jugador } from '@/services/jugadoresService';
 import { cambiarEstadoPartido, obtenerPartido, type EstadoPartido, type Partido } from '@/services/partidosService';
+import { useSesion } from '@/contexts/SesionContext';
 
 export default function PartidoEnVivoScreen() {
+  const { usuario } = useSesion();
   const { id } = useLocalSearchParams<{ id: string | string[] }>();
   const partidoId = typeof id === 'string' && /^\d+$/.test(id) ? Number(id) : NaN;
   const idValido = Number.isSafeInteger(partidoId) && partidoId > 0 && partidoId <= 2147483647;
@@ -102,9 +104,11 @@ export default function PartidoEnVivoScreen() {
 
   const bloqueado = cargando || procesando || !actualizado;
   const enJuego = partido?.estado === 'EN_JUEGO';
+  const puedeOperar = !!partido && (usuario?.rol === 'ADMIN' ||
+    (usuario?.rol === 'DELEGADO' && usuario.equipoId === partido.equipoLocalId));
 
   async function ejecutar(operacion: () => Promise<unknown>, texto: string) {
-    if (ocupado.current || bloqueado) return;
+    if (!puedeOperar || ocupado.current || bloqueado) return;
     const version = vigente.current;
     ocupado.current = true;
     setProcesando(true);
@@ -148,7 +152,7 @@ export default function PartidoEnVivoScreen() {
   }
 
   function guardarEvento() {
-    if (ocupado.current || bloqueado || !enJuego) return;
+    if (!puedeOperar || ocupado.current || bloqueado || !enJuego) return;
     if (!jugadorId || !jugadores.some((jugador) => jugador.id === jugadorId)) {
       setError('Selecciona un jugador de los equipos del partido.');
       return;
@@ -170,7 +174,7 @@ export default function PartidoEnVivoScreen() {
   }
 
   function editar(evento: EventoPartido) {
-    if (bloqueado || !enJuego) return;
+    if (!puedeOperar || bloqueado || !enJuego) return;
     setError('');
     setMensaje('');
     setConfirmacion(null);
@@ -182,7 +186,7 @@ export default function PartidoEnVivoScreen() {
   }
 
   function confirmar() {
-    if (!confirmacion || bloqueado || !partido) return;
+    if (!puedeOperar || !confirmacion || bloqueado || !partido) return;
     if ('estado' in confirmacion) {
       const destino = confirmacion.estado;
       if ((partido.estado === 'PROGRAMADO' && destino === 'SUSPENDIDO') ||
@@ -215,10 +219,10 @@ export default function PartidoEnVivoScreen() {
                 <ThemedText>Fecha/hora: {partido.fechaHoraInicio?.replace('T', ' ') || 'No disponible'}</ThemedText>
                 <ThemedText type="smallBold">Estado: {partido.estado}</ThemedText>
                 {!actualizado && <ThemedText>Actualiza para habilitar operaciones. Los datos visibles pueden estar desactualizados.</ThemedText>}
-                {partido.estado === 'PROGRAMADO' && <Button title="Iniciar partido" disabled={bloqueado} onPress={() => void ejecutar(() => cambiarEstadoPartido(partidoId, 'EN_JUEGO'), 'Partido iniciado.')} />}
-                {enJuego && <Button title="Finalizar" disabled={bloqueado} onPress={() => setConfirmacion({ estado: 'FINALIZADO' })} />}
-                {(partido.estado === 'PROGRAMADO' || enJuego) && <Button variant="danger" title="Suspender" disabled={bloqueado} onPress={() => setConfirmacion({ estado: 'SUSPENDIDO' })} />}
-                {confirmacion && (
+                {puedeOperar && partido.estado === 'PROGRAMADO' && <Button title="Iniciar partido" disabled={bloqueado} onPress={() => void ejecutar(() => cambiarEstadoPartido(partidoId, 'EN_JUEGO'), 'Partido iniciado.')} />}
+                {puedeOperar && enJuego && <Button title="Finalizar" disabled={bloqueado} onPress={() => setConfirmacion({ estado: 'FINALIZADO' })} />}
+                {puedeOperar && (partido.estado === 'PROGRAMADO' || enJuego) && <Button variant="danger" title="Suspender" disabled={bloqueado} onPress={() => setConfirmacion({ estado: 'SUSPENDIDO' })} />}
+                {puedeOperar && confirmacion && (
                   <ThemedView type="backgroundElement" style={styles.bloque}>
                     <ThemedText>{'eventoId' in confirmacion ? '¿Eliminar este evento definitivamente?' : confirmacion.estado === 'FINALIZADO' ? '¿Finalizar el partido? No se podrán realizar más cambios.' : '¿Suspender el partido? No se podrán realizar más cambios.'}</ThemedText>
                     <Button title="Confirmar" disabled={bloqueado} onPress={confirmar} />
@@ -231,7 +235,7 @@ export default function PartidoEnVivoScreen() {
                   <ThemedView key={evento.id} type="backgroundElement" style={styles.bloque}>
                     <ThemedText>{evento.minuto}′ — {evento.tipo}</ThemedText>
                     <ThemedText>{nombreJugador(evento.jugadorId)}</ThemedText>
-                    {enJuego && (
+                    {puedeOperar && enJuego && (
                       <>
                         <Button variant="secondary" title={`Corregir evento ${evento.id}`} disabled={bloqueado} onPress={() => editar(evento)} />
                         <Button variant="danger" title={`Eliminar evento ${evento.id}`} disabled={bloqueado} onPress={() => setConfirmacion({ eventoId: evento.id })} />
@@ -239,7 +243,7 @@ export default function PartidoEnVivoScreen() {
                     )}
                   </ThemedView>
                 ))}
-                {enJuego && (
+                {puedeOperar && enJuego && (
                   <ThemedView style={styles.bloque}>
                     <ThemedText type="subtitle">{editando !== null ? `Corregir evento ${editando}` : 'Registrar evento'}</ThemedText>
                     <ThemedText>Jugador: {jugadorId ? nombreJugador(jugadorId) : 'Sin seleccionar'}</ThemedText>

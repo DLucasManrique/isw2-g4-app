@@ -16,6 +16,7 @@ export default function LoginScreen() {
   const { guardarSesion, error: errorSesion } = useSesion();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [mostrarPassword, setMostrarPassword] = useState(false);
   const [error, setError] = useState('');
   const [cargando, setCargando] = useState(false);
 
@@ -51,7 +52,8 @@ export default function LoginScreen() {
             <ThemedText>Usuario</ThemedText>
             <TextInput accessibilityLabel="Usuario" value={username} onChangeText={setUsername} autoCapitalize="none" autoCorrect={false} autoComplete="username" editable={!cargando} style={estiloCampo} />
             <ThemedText>Contraseña</ThemedText>
-            <TextInput accessibilityLabel="Contraseña" value={password} onChangeText={setPassword} secureTextEntry autoCapitalize="none" autoCorrect={false} autoComplete="current-password" editable={!cargando} style={estiloCampo} onSubmitEditing={() => void ingresar()} />
+            <TextInput accessibilityLabel="Contraseña" value={password} onChangeText={setPassword} secureTextEntry={!mostrarPassword} autoCapitalize="none" autoCorrect={false} autoComplete="current-password" editable={!cargando} style={estiloCampo} onSubmitEditing={() => void ingresar()} />
+            <Button variant="secondary" title={mostrarPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'} disabled={cargando} onPress={() => setMostrarPassword(!mostrarPassword)} />
             {!!(error || errorSesion) && <ThemedText accessibilityRole="alert">{error || errorSesion}</ThemedText>}
             {cargando && <ActivityIndicator accessibilityLabel="Iniciando sesión" />}
             <Button title={cargando ? 'Iniciando sesión…' : 'Iniciar sesión'} disabled={cargando} onPress={() => void ingresar()} />

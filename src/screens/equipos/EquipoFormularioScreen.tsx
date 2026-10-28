@@ -1,5 +1,5 @@
 import { AppButton as Button } from '@/components/app-button';
-import { router, useLocalSearchParams } from 'expo-router';
+import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -16,8 +16,11 @@ import { ThemedView } from '@/components/themed-view';
 import { Spacing, Visual } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { actualizarEquipo, crearEquipo, obtenerEquipo } from '@/services/equiposService';
+import { useSesion } from '@/contexts/SesionContext';
 
 export default function EquipoFormularioScreen({ modo }: { modo: 'crear' | 'editar' }) {
+  const { usuario } = useSesion();
+  const esAdmin = usuario?.rol === 'ADMIN';
   const { id } = useLocalSearchParams<{ id?: string | string[] }>();
   const equipoId = typeof id === 'string' && /^\d+$/.test(id) ? Number(id) : NaN;
   const idValido = Number.isSafeInteger(equipoId) && equipoId > 0 && equipoId <= 2147483647;
@@ -34,7 +37,7 @@ export default function EquipoFormularioScreen({ modo }: { modo: 'crear' | 'edit
   const [intentoCarga, setIntentoCarga] = useState(0);
 
   useEffect(() => {
-    if (!editando) return;
+    if (!esAdmin || !editando) return;
     if (!idValido) {
       setError('El ID del equipo debe ser un entero positivo válido.');
       setEquipoCargado(false);
@@ -62,10 +65,10 @@ export default function EquipoFormularioScreen({ modo }: { modo: 'crear' | 'edit
     return () => {
       vigente = false;
     };
-  }, [editando, equipoId, idValido, intentoCarga]);
+  }, [esAdmin, editando, equipoId, idValido, intentoCarga]);
 
   async function guardar() {
-    if (guardando || cargando || !equipoCargado || (editando && !idValido)) return;
+    if (!esAdmin || guardando || cargando || !equipoCargado || (editando && !idValido)) return;
     const numeroTorneo = Number(torneoId.trim());
     if (!nombre.trim()) {
       setError('El nombre es obligatorio y no puede contener solamente espacios.');
@@ -122,6 +125,8 @@ export default function EquipoFormularioScreen({ modo }: { modo: 'crear' | 'edit
       backgroundColor: theme.backgroundElement,
     },
   ];
+
+  if (!esAdmin) return <Redirect href="/equipos" />;
 
   return (
     <ThemedView style={styles.pantalla}>

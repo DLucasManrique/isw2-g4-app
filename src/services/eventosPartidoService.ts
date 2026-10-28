@@ -21,6 +21,7 @@ export async function listarEventos(partidoId: number): Promise<EventoPartido[]>
 export async function registrarEvento(partidoId: number, datos: EventoRequest): Promise<EventoPartido> {
   const respuesta = await solicitarPartido(`/${partidoId}/eventos`, {
     method: 'POST',
+    credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(datos),
   });
@@ -30,6 +31,7 @@ export async function registrarEvento(partidoId: number, datos: EventoRequest): 
 export async function corregirEvento(partidoId: number, eventoId: number, datos: EventoRequest): Promise<EventoPartido> {
   const respuesta = await solicitarPartido(`/${partidoId}/eventos/${eventoId}`, {
     method: 'PUT',
+    credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(datos),
   });
@@ -37,5 +39,5 @@ export async function corregirEvento(partidoId: number, eventoId: number, datos:
 }
 
 export async function eliminarEvento(partidoId: number, eventoId: number): Promise<void> {
-  await solicitarPartido(`/${partidoId}/eventos/${eventoId}`, { method: 'DELETE' });
+  await solicitarPartido(`/${partidoId}/eventos/${eventoId}`, { method: 'DELETE', credentials: 'include' });
 }
